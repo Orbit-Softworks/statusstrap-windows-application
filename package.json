@@ -1,6 +1,6 @@
 {
   "name": "StatusStrap",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "StatusStrap App",
   "author": "Smilez",
   "main": "main.js",
@@ -35,7 +35,7 @@
     "publish": {
       "provider": "github",
       "owner": "Orbit-Softworks",
-      "repo": "statusstrap-windows"
+      "repo": "statusstrap-windows-application"
     }
   }
 }
