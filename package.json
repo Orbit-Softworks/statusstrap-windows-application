@@ -6,7 +6,7 @@
   "main": "main.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Orbit-Softworks/statusstrap-windows.git"
+    "url": "https://github.com/Orbit-Softworks/statusstrap-windows-application.git"
   },
   "scripts": {
     "start": "electron .",
