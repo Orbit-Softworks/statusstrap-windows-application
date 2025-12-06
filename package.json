@@ -52,8 +52,7 @@
         "to": "icon.png"
       }
     ],
-    "generateUpdatesFilesForAllChannels": true,
-    "publishAutoUpdate": true
+    "generateUpdatesFilesForAllChannels": true
   },
   "//": "Disable package-lock.json generation",
   "private": true,
