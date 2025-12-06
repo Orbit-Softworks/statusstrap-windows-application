@@ -5,7 +5,6 @@ const log = require('electron-log');
 let splashWindow;
 let mainWindow;
 
-// Configure logging
 log.transports.file.level = 'debug';
 log.transports.console.level = 'debug';
 autoUpdater.logger = log;
@@ -41,7 +40,6 @@ function createMainWindow() {
 }
 
 function setupAutoUpdater() {
-  // Only check for updates in production
   if (!app.isPackaged) {
     console.log('Dev mode: Skipping auto-update check');
     return false;
@@ -53,14 +51,12 @@ function setupAutoUpdater() {
   console.log('Owner: Orbit-Softworks');
   console.log('Repo: statusstrap-app');
   
-  // CRITICAL: Configure auto-updater
-  autoUpdater.autoDownload = true; // Must be true!
-  autoUpdater.autoInstallOnAppQuit = true; // Install on quit
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
   autoUpdater.allowDowngrade = false;
   autoUpdater.allowPrerelease = false;
   autoUpdater.fullChangelog = true;
   
-  // Event handlers
   autoUpdater.on('checking-for-update', () => {
     console.log('Checking for updates...');
     if (splashWindow) {
@@ -79,7 +75,6 @@ function setupAutoUpdater() {
       splashWindow.webContents.send('progress', 0);
     }
     
-    // Auto-download should start automatically with autoDownload = true
     console.log('Auto-download starting...');
   });
   
@@ -116,18 +111,15 @@ function setupAutoUpdater() {
       splashWindow.webContents.send('progress', 100);
       splashWindow.webContents.send('status', 'Update downloaded!');
       
-      // Ask user to restart (or auto-restart after delay)
       setTimeout(() => {
         splashWindow.webContents.send('status', 'Restarting to install update...');
         
-        // Give user 2 seconds to see the message, then restart
         setTimeout(() => {
           console.log('Calling quitAndInstall()...');
-          autoUpdater.quitAndInstall(true, true); // isSilent = true, isForceRunAfter = true
+          autoUpdater.quitAndInstall(true, true);
         }, 2000);
       }, 1000);
     } else {
-      // If no splash window, just install
       autoUpdater.quitAndInstall(true, true);
     }
   });
@@ -137,7 +129,6 @@ function setupAutoUpdater() {
     console.error('Error message:', err.message);
     console.error('Error stack:', err.stack);
     
-    // Check for specific errors
     if (err.message.includes('404') || err.message.includes('Not Found')) {
       console.error('ERROR: latest.yml or installer not found on GitHub');
       console.error('Check that the release contains: latest.yml and .exe file');
@@ -149,7 +140,6 @@ function setupAutoUpdater() {
       console.error('ERROR: GitHub API error');
     }
     
-    // Continue to app even if update fails
     if (splashWindow) {
       splashWindow.webContents.send('status', 'Update failed, starting app...');
       setTimeout(() => createMainWindow(), 1500);
@@ -163,28 +153,24 @@ function setupAutoUpdater() {
 
 function checkForUpdates() {
   if (!setupAutoUpdater()) {
-    // Not in production, just start the app
     setTimeout(() => createMainWindow(), 2000);
     return;
   }
   
   console.log('Starting update check...');
   
-  // Set a timeout in case update check hangs
   const updateTimeout = setTimeout(() => {
     console.log('Update check timeout, starting app...');
     if (splashWindow) {
       splashWindow.webContents.send('status', 'Starting app...');
       setTimeout(() => createMainWindow(), 1000);
     }
-  }, 15000); // 15 second timeout
+  }, 15000);
   
-  // Start the update check
   autoUpdater.checkForUpdates().then(result => {
     clearTimeout(updateTimeout);
     console.log('Update check result:', result);
     
-    // If no update available, result will be null
     if (!result || !result.updateInfo) {
       console.log('No update found or already up to date');
       if (splashWindow) {
@@ -206,7 +192,6 @@ app.on('ready', () => {
   console.log(`StatusStrap v${app.getVersion()} starting...`);
   createSplash();
   
-  // Wait for splash to render, then check for updates
   setTimeout(() => {
     checkForUpdates();
   }, 1000);
@@ -220,7 +205,6 @@ ipcMain.on('get-version', (event) => {
   event.returnValue = app.getVersion();
 });
 
-// Debug helper
 global.debugUpdate = () => {
   console.log('=== MANUAL UPDATE DEBUG ===');
   if (app.isPackaged) {
@@ -230,7 +214,6 @@ global.debugUpdate = () => {
   }
 };
 
-// Force update check (for testing)
 global.forceUpdateCheck = () => {
   console.log('=== FORCE UPDATE CHECK ===');
   checkForUpdates();
