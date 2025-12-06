@@ -1,0 +1,45 @@
+name: Build and Upload to Release
+on: 
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18
+        
+    - name: Install dependencies
+      run: npm install
+      
+    - name: Get version from tag
+      id: get_version
+      run: |
+        $tag = "${{ github.event.release.tag_name }}"
+        $version = $tag -replace '^v', ''
+        echo "version=$version" >> $env:GITHUB_OUTPUT
+        echo "Building version: $version"
+      
+    - name: Build application
+      run: npx electron-builder --win --publish never
+      
+    - name: Upload files to release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ github.event.release.tag_name }}
+        files: |
+          dist/*.exe
+          dist/*.blockmap
+          dist/latest.yml
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
