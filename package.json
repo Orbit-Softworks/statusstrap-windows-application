@@ -1,0 +1,42 @@
+{
+  "name": "StatusStrap",
+  "version": "1.0.1",
+  "description": "StatusStrap App",
+  "author": "Smilez",
+  "main": "main.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Orbit-Softworks/statusstrap-app.git"
+  },
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win",
+    "publish": "electron-builder --win -p always"
+  },
+  "devDependencies": {
+    "electron": "^26.6.10",
+    "electron-builder": "^24.13.3"
+  },
+  "dependencies": {
+    "electron-updater": "^6.6.2",
+    "electron-log": "^5.0.1"
+  },
+  "build": {
+    "appId": "com.statusstrap.app",
+    "productName": "StatusStrap",
+    "win": {
+      "target": "nsis",
+      "icon": "icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "Orbit-Softworks",
+      "repo": "statusstrap-app",
+      "releaseType": "release"
+    }
+  }
+}
