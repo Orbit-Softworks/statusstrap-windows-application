@@ -21,36 +21,41 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: 18
-        cache: 'npm'  # Remove this line since we're not using lock file
       
-    - name: Clean install dependencies
+    - name: Install and Build
       run: |
-        # Remove any existing node_modules
-        if (Test-Path node_modules) { Remove-Item -Recurse -Force node_modules }
-        # Install without lock file
-        npm install --no-package-lock --no-shrinkwrap
-        # Create dummy package-lock.json to bypass electron-builder check
-        echo {} > package-lock.json
+        # Force npm to ignore package-lock.json
+        npm config set package-lock false
         
-    - name: Get current version
-      id: get_version
-      run: |
-        $version = node -p "require('./package.json').version"
-        echo "version=$version" >> $env:GITHUB_OUTPUT
-        echo "Building version: $version"
-      
-    - name: Build and Publish
-      run: npx electron-builder --win --publish always
+        # Clean install without package-lock
+        npm install --no-package-lock
+        
+        # Build and publish the app with all auto-updater files
+        npx electron-builder --win --publish always
+        
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        # Add these to suppress warnings
-        NODE_ENV: production
-        NPM_CONFIG_PACKAGE_LOCK: false
         
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: StatusStrap-Windows
-        path: dist/*.exe
-        retention-days: 30
+    - name: Verify Auto-Updater Files
+      run: |
+        echo "Checking for auto-updater files..."
+        if (Test-Path "dist/latest.yml") {
+          echo "✓ latest.yml exists"
+          Get-Content dist/latest.yml
+        } else {
+          echo "✗ latest.yml missing!"
+        }
+        
+        if (Test-Path "dist/*.exe") {
+          echo "✓ Installer exists"
+          Get-ChildItem dist/*.exe | ForEach-Object { echo "  - $_" }
+        } else {
+          echo "✗ Installer missing!"
+        }
+        
+        if (Test-Path "dist/*.exe.blockmap") {
+          echo "✓ Blockmap exists"
+          Get-ChildItem dist/*.exe.blockmap | ForEach-Object { echo "  - $_" }
+        } else {
+          echo "✗ Blockmap missing!"
+        }
