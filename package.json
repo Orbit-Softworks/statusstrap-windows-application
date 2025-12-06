@@ -46,5 +46,10 @@
         "to": "icon.png"
       }
     ]
+  },
+  "//": "Disable package-lock.json generation",
+  "private": true,
+  "resolutions": {
+    "**": "latest"
   }
 }
