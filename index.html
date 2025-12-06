@@ -1,1419 +1,445 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StatusStrap v1.19 - Roblox Launcher Tracker</title>
-    <style>
-        /* Exact copy of your website CSS */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: #000;
-            color: white;
-            overflow: hidden;
-            height: 100vh;
-        }
-
-        .app-container {
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        /* Header */
-        header {
-            background: rgba(0, 0, 0, 0.95);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(220, 38, 38, 0.2);
-            padding: 8px 0;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1000;
-        }
-
-        .header-content {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            height: 56px;
-        }
-
-        .logo-container {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .logo {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            overflow: hidden;
-            background: linear-gradient(135deg, #dc2626, #991b1b);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 14px;
-            color: white;
-        }
-
-        .logo img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .logo-text {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .logo-text .title {
-            font-size: 18px;
-            font-weight: 700;
-            color: white;
-        }
-
-        .logo-text .subtitle {
-            font-size: 11px;
-            color: #dc2626;
-            font-weight: 500;
-        }
-
-        .version-badge {
-            background: rgba(220, 38, 38, 0.1);
-            border: 1px solid rgba(220, 38, 38, 0.3);
-            color: #dc2626;
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-family: 'Monaco', 'Menlo', monospace;
-            font-weight: 500;
-        }
-
-        nav {
-            display: flex;
-            gap: 8px;
-        }
-
-        .nav-button {
-            padding: 8px 16px;
-            border-radius: 8px;
-            border: 1px solid rgba(220, 38, 38, 0.3);
-            background: transparent;
-            color: #dc2626;
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .nav-button:hover {
-            border-color: #dc2626;
-            background: rgba(220, 38, 38, 0.1);
-        }
-
-        /* Main content */
-        .main-content {
-            flex: 1;
-            overflow-y: auto;
-            padding-top: 72px;
-            padding-bottom: 80px;
-        }
-
-        .content-wrapper {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-
-        /* Hero section */
-        .hero {
-            text-align: center;
-            padding: 40px 0 60px;
-        }
-
-        .hero h1 {
-            font-size: 48px;
-            font-weight: 800;
-            margin-bottom: 16px;
-            background: linear-gradient(135deg, #fff, #dc2626);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .hero p {
-            font-size: 18px;
-            color: #dc2626;
-            max-width: 600px;
-            margin: 0 auto 40px;
-            line-height: 1.6;
-        }
-
-        /* Status bar */
-        .status-bar {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 40px;
-        }
-
-        .status-indicator {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 16px;
-            border-radius: 10px;
-            background: rgba(34, 197, 94, 0.1);
-            border: 1px solid rgba(34, 197, 94, 0.2);
-            color: #22c55e;
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #22c55e;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
-        }
-
-        /* Stats grid */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 16px;
-            margin-bottom: 60px;
-            max-width: 800px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        @media (min-width: 768px) {
-            .stats-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
-        }
-
-        @media (min-width: 1024px) {
-            .stats-grid {
-                grid-template-columns: repeat(6, 1fr);
-            }
-        }
-
-        .stat-card {
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(220, 38, 38, 0.2);
-            border-radius: 12px;
-            padding: 20px;
-            text-align: center;
-            transition: all 0.2s ease;
-            cursor: pointer;
-        }
-
-        .stat-card:hover {
-            border-color: rgba(220, 38, 38, 0.5);
-            transform: translateY(-2px);
-        }
-
-        .stat-icon {
-            width: 32px;
-            height: 32px;
-            margin: 0 auto 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .stat-icon img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-
-        .stat-value {
-            font-size: 24px;
-            font-weight: 700;
-            color: white;
-            margin-bottom: 4px;
-        }
-
-        .stat-label {
-            font-size: 12px;
-            color: #dc2626;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        /* Search */
-        .search-container {
-            max-width: 600px;
-            margin: 0 auto 60px;
-        }
-
-        .search-input {
-            width: 100%;
-            padding: 16px 24px;
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(220, 38, 38, 0.3);
-            border-radius: 12px;
-            color: white;
-            font-size: 16px;
-            transition: all 0.2s ease;
-        }
-
-        .search-input:focus {
-            outline: none;
-            border-color: #dc2626;
-            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
-        }
-
-        .search-input::placeholder {
-            color: rgba(220, 38, 38, 0.5);
-        }
-
-        /* Section header */
-        .section-header {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 60px 0 40px;
-        }
-
-        .section-line {
-            flex: 1;
-            height: 1px;
-            background: rgba(220, 38, 38, 0.3);
-        }
-
-        .section-title {
-            margin: 0 24px;
-            text-align: center;
-        }
-
-        .section-title h2 {
-            font-size: 32px;
-            font-weight: 700;
-            color: white;
-            margin-bottom: 8px;
-        }
-
-        .section-title-line {
-            width: 80px;
-            height: 3px;
-            background: #dc2626;
-            margin: 0 auto;
-        }
-
-        /* Cards grid */
-        .cards-grid {
-            display: grid;
-            grid-template-columns: repeat(1, 1fr);
-            gap: 24px;
-            margin-bottom: 80px;
-        }
-
-        @media (min-width: 768px) {
-            .cards-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        .card {
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(220, 38, 38, 0.2);
-            border-radius: 16px;
-            padding: 24px;
-            transition: all 0.2s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .card:hover {
-            border-color: rgba(220, 38, 38, 0.5);
-            transform: translateY(-4px);
-        }
-
-        .card.disabled {
-            opacity: 0.6;
-            filter: grayscale(100%);
-            cursor: not-allowed;
-        }
-
-        .card-header {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            margin-bottom: 16px;
-        }
-
-        .card-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
-            overflow: hidden;
-            margin-right: 16px;
-            flex-shrink: 0;
-            border: 1px solid rgba(220, 38, 38, 0.3);
-        }
-
-        .card-icon img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .card-title {
-            flex: 1;
-        }
-
-        .card-title h3 {
-            font-size: 20px;
-            font-weight: 700;
-            color: white;
-            margin-bottom: 8px;
-        }
-
-        .card-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-        }
-
-        .tag {
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-        }
-
-        .tag.recommended {
-            background: rgba(220, 38, 38, 0.2);
-            color: #dc2626;
-            border: 1px solid rgba(220, 38, 38, 0.3);
-        }
-
-        .tag.regular {
-            background: rgba(0, 0, 0, 0.5);
-            color: #dc2626;
-            border: 1px solid rgba(220, 38, 38, 0.2);
-        }
-
-        .card-badges {
-            display: flex;
-            gap: 6px;
-        }
-
-        .badge {
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: 600;
-            font-family: 'Monaco', 'Menlo', monospace;
-        }
-
-        .badge.version {
-            background: rgba(34, 197, 94, 0.2);
-            color: #22c55e;
-            border: 1px solid rgba(34, 197, 94, 0.3);
-        }
-
-        .badge.status {
-            background: rgba(34, 197, 94, 0.2);
-            color: #22c55e;
-            border: 1px solid rgba(34, 197, 94, 0.3);
-        }
-
-        .badge.status.offline {
-            background: rgba(239, 68, 68, 0.2);
-            color: #ef4444;
-            border: 1px solid rgba(239, 68, 68, 0.3);
-        }
-
-        .badge.type {
-            background: rgba(59, 130, 246, 0.2);
-            color: #3b82f6;
-            border: 1px solid rgba(59, 130, 246, 0.3);
-        }
-
-        .badge.type.mod {
-            background: rgba(168, 85, 247, 0.2);
-            color: #a855f7;
-            border: 1px solid rgba(168, 85, 247, 0.3);
-        }
-
-        .prerelease-banner {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            background: rgba(249, 115, 22, 0.2);
-            border: 1px solid rgba(249, 115, 22, 0.5);
-            color: #f97316;
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 10px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .card-description {
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 14px;
-            line-height: 1.6;
-            margin-bottom: 20px;
-        }
-
-        .card-stats {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .stat-item {
-            padding: 12px;
-            border-radius: 8px;
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(220, 38, 38, 0.1);
-        }
-
-        .stat-label {
-            font-size: 12px;
-            color: rgba(220, 38, 38, 0.7);
-            margin-bottom: 4px;
-        }
-
-        .stat-value {
-            font-size: 14px;
-            font-weight: 600;
-            color: white;
-        }
-
-        .card-actions {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .download-button {
-            padding: 12px;
-            border-radius: 8px;
-            background: #dc2626;
-            color: white;
-            border: none;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .download-button:hover {
-            background: #b91c1c;
-            transform: translateY(-1px);
-        }
-
-        .download-button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .button-row {
-            display: flex;
-            gap: 12px;
-        }
-
-        .secondary-button {
-            flex: 1;
-            padding: 12px;
-            border-radius: 8px;
-            background: transparent;
-            border: 1px solid rgba(220, 38, 38, 0.3);
-            color: #dc2626;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .secondary-button:hover {
-            background: rgba(220, 38, 38, 0.1);
-            border-color: #dc2626;
-        }
-
-        .secondary-button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        /* Credits section */
-        .credits-section {
-            padding: 60px 0;
-        }
-
-        .contributors-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 24px;
-            margin-bottom: 60px;
-        }
-
-        @media (min-width: 768px) {
-            .contributors-grid {
-                grid-template-columns: repeat(4, 1fr);
-            }
-        }
-
-        .contributor-card {
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(220, 38, 38, 0.2);
-            border-radius: 16px;
-            padding: 24px;
-            text-align: center;
-            transition: all 0.2s ease;
-        }
-
-        .contributor-card:hover {
-            border-color: rgba(220, 38, 38, 0.5);
-            transform: translateY(-2px);
-        }
-
-        .contributor-avatar {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            overflow: hidden;
-            margin: 0 auto 16px;
-            border: 2px solid rgba(220, 38, 38, 0.3);
-        }
-
-        .contributor-avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .contributor-name {
-            font-size: 18px;
-            font-weight: 700;
-            color: white;
-            margin-bottom: 8px;
-        }
-
-        .contributor-role {
-            font-size: 14px;
-            color: #dc2626;
-        }
-
-        .thanks-box {
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(220, 38, 38, 0.2);
-            border-radius: 16px;
-            padding: 32px;
-            text-align: center;
-        }
-
-        .thanks-box h3 {
-            font-size: 24px;
-            font-weight: 700;
-            color: white;
-            margin-bottom: 16px;
-        }
-
-        .thanks-box p {
-            color: rgba(255, 255, 255, 0.8);
-            line-height: 1.6;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        /* Footer */
-        footer {
-            background: rgba(0, 0, 0, 0.8);
-            border-top: 1px solid rgba(220, 38, 38, 0.2);
-            padding: 40px 0;
-            margin-top: auto;
-        }
-
-        .footer-content {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 20px;
-            text-align: center;
-        }
-
-        .footer-logo {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .footer-logo .logo {
-            width: 40px;
-            height: 40px;
-        }
-
-        .footer-logo .title {
-            font-size: 24px;
-            font-weight: 700;
-            color: white;
-        }
-
-        .copyright {
-            color: #dc2626;
-            font-size: 14px;
-            margin-bottom: 8px;
-        }
-
-        .subtext {
-            color: #dc2626;
-            font-size: 12px;
-            opacity: 0.8;
-        }
-
-        /* Loading overlay */
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: #000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-        }
-
-        .loading-content {
-            text-align: center;
-        }
-
-        .loading-logo {
-            width: 80px;
-            height: 80px;
-            border-radius: 20px;
-            overflow: hidden;
-            margin: 0 auto 24px;
-            background: linear-gradient(135deg, #dc2626, #991b1b);
-        }
-
-        .loading-logo img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .loading-title {
-            font-size: 32px;
-            font-weight: 800;
-            color: white;
-            margin-bottom: 8px;
-        }
-
-        .loading-subtitle {
-            font-size: 14px;
-            color: #dc2626;
-            font-weight: 500;
-            letter-spacing: 2px;
-            margin-bottom: 32px;
-        }
-
-        .loading-bar {
-            width: 200px;
-            height: 4px;
-            background: rgba(220, 38, 38, 0.2);
-            border-radius: 2px;
-            overflow: hidden;
-            margin: 0 auto;
-        }
-
-        .loading-progress {
-            height: 100%;
-            background: #dc2626;
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-
-        .loading-text {
-            color: #dc2626;
-            font-size: 12px;
-            margin-top: 12px;
-            font-family: 'Monaco', 'Menlo', monospace;
-        }
-
-        /* Update notification */
-        .update-notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: rgba(34, 197, 94, 0.1);
-            border: 1px solid rgba(34, 197, 94, 0.3);
-            border-radius: 12px;
-            padding: 16px;
-            color: #22c55e;
-            font-size: 14px;
-            font-weight: 500;
-            z-index: 1000;
-            animation: slideIn 0.3s ease;
-            display: none;
-        }
-
-        @keyframes slideIn {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.1);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: rgba(220, 38, 38, 0.3);
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(220, 38, 38, 0.5);
-        }
-    </style>
-</head>
-<body>
-    <!-- Loading Screen -->
-    <div class="loading-overlay" id="loadingScreen">
-        <div class="loading-content">
-            <div class="loading-logo">
-                <img src="https://i.ibb.co/zTFZDhbR/status-strap-christmas-b.png" alt="StatusStrap">
-            </div>
-            <h1 class="loading-title">STATUSSTRAP</h1>
-            <p class="loading-subtitle">LAUNCHER TRACKER</p>
-            <div class="loading-bar">
-                <div class="loading-progress" id="loadingProgress"></div>
-            </div>
-            <p class="loading-text" id="loadingText">Loading...</p>
-        </div>
-    </div>
-
-    <!-- Update Notification -->
-    <div class="update-notification" id="updateNotification">
-        New updates detected! Check your notifications.
-    </div>
-
-    <!-- Main App -->
-    <div class="app-container" id="appContainer" style="display: none;">
-        <!-- Header -->
-        <header>
-            <div class="header-content">
-                <div class="logo-container">
-                    <div class="logo">
-                        <img src="https://i.ibb.co/zTFZDhbR/status-strap-christmas-b.png" alt="StatusStrap">
-                    </div>
-                    <div class="logo-text">
-                        <div class="title">StatusStrap</div>
-                        <div class="subtitle">Live Tracker</div>
-                    </div>
-                    <div class="version-badge">v1.19</div>
-                </div>
-                <nav>
-                    <button class="nav-button" onclick="scrollToSection('home')">Home</button>
-                    <button class="nav-button" onclick="scrollToSection('bootstrappers')">Bootstrappers</button>
-                    <button class="nav-button" onclick="scrollToSection('mods')">Mods</button>
-                    <button class="nav-button" onclick="scrollToSection('credits')">Credits</button>
-                    <button class="nav-button" onclick="window.electron.openExternal('https://discord.gg/statusstrap')">Discord</button>
-                </nav>
-            </div>
-        </header>
-
-        <!-- Main Content -->
-        <div class="main-content" id="mainContent">
-            <div class="content-wrapper">
-                <!-- Home Section -->
-                <section id="home">
-                    <div class="hero">
-                        <h1>STATUSSTRAP</h1>
-                        <p>Real-Time Tracking For Roblox Bootstrappers. Stay Updated With The Latest Versions And Releases.</p>
-                        
-                        <div class="status-bar">
-                            <div class="status-indicator">
-                                <div class="status-dot"></div>
-                                <span id="statusText">Active • Last: Just now</span>
-                            </div>
-                        </div>
-
-                        <!-- Stats Grid -->
-                        <div class="stats-grid" id="statsGrid">
-                            <!-- Stats will be populated by JavaScript -->
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Bootstrappers Section -->
-                <section id="bootstrappers">
-                    <!-- Search -->
-                    <div class="search-container">
-                        <input type="text" class="search-input" id="searchInput" placeholder="Search launchers..." oninput="filterCards()">
-                    </div>
-
-                    <!-- Section Header -->
-                    <div class="section-header">
-                        <div class="section-line"></div>
-                        <div class="section-title">
-                            <h2>BOOTSTRAPPERS</h2>
-                            <div class="section-title-line"></div>
-                        </div>
-                        <div class="section-line"></div>
-                    </div>
-
-                    <!-- Cards Grid -->
-                    <div class="cards-grid" id="bootstrappersGrid">
-                        <!-- Bootstrappers will be populated by JavaScript -->
-                    </div>
-                </section>
-
-                <!-- Mods Section -->
-                <section id="mods">
-                    <!-- Section Header -->
-                    <div class="section-header">
-                        <div class="section-line"></div>
-                        <div class="section-title">
-                            <h2>MODS</h2>
-                            <div class="section-title-line"></div>
-                        </div>
-                        <div class="section-line"></div>
-                    </div>
-
-                    <!-- Cards Grid -->
-                    <div class="cards-grid" id="modsGrid">
-                        <!-- Mods will be populated by JavaScript -->
-                    </div>
-                </section>
-
-                <!-- Credits Section -->
-                <section id="credits" class="credits-section">
-                    <!-- Section Header -->
-                    <div class="section-header">
-                        <div class="section-line"></div>
-                        <div class="section-title">
-                            <h2>CREDITS</h2>
-                            <div class="section-title-line"></div>
-                        </div>
-                        <div class="section-line"></div>
-                    </div>
-
-                    <!-- Contributors Grid -->
-                    <div class="contributors-grid" id="contributorsGrid">
-                        <!-- Contributors will be populated by JavaScript -->
-                    </div>
-
-                    <!-- Thanks Box -->
-                    <div class="thanks-box">
-                        <h3>Special Thanks</h3>
-                        <p>Thank you to all the developers, testers, and community members who have contributed to the Roblox modding ecosystem. Your hard work and dedication make projects like StatusStrap possible.</p>
-                    </div>
-                </section>
-            </div>
-        </div>
-
-        <!-- Footer -->
-        <footer>
-            <div class="footer-content">
-                <div class="footer-logo">
-                    <div class="logo">
-                        <img src="https://i.ibb.co/zTFZDhbR/status-strap-christmas-b.png" alt="StatusStrap">
-                    </div>
-                    <div class="title">STATUSSTRAP</div>
-                </div>
-                <p class="copyright">© 2025 StatusStrap • Real-Time GitHub Tracking</p>
-                <p class="subtext">Advanced Release Monitoring • Rate Limit Protected • Live Updates</p>
-            </div>
-        </footer>
-    </div>
-
-    <script>
-        // Wait for DOM to load
-        document.addEventListener('DOMContentLoaded', async () => {
-            // Simulate loading
-            simulateLoading();
-            
-            // Initialize app
-            await initializeApp();
-        });
-
-        // Loading simulation
-        function simulateLoading() {
-            let progress = 0;
-            const progressBar = document.getElementById('loadingProgress');
-            const loadingText = document.getElementById('loadingText');
-            
-            const interval = setInterval(() => {
-                progress += Math.random() * 10;
-                if (progress >= 100) {
-                    progress = 100;
-                    clearInterval(interval);
-                    
-                    progressBar.style.width = '100%';
-                    loadingText.textContent = 'Ready';
-                    
-                    setTimeout(() => {
-                        document.getElementById('loadingScreen').style.display = 'none';
-                        document.getElementById('appContainer').style.display = 'block';
-                        initializeAnimations();
-                    }, 800);
-                } else {
-                    progressBar.style.width = `${progress}%`;
-                    loadingText.textContent = `Loading ${Math.floor(progress)}%`;
-                }
-            }, 100);
-        }
-
+<script>
+    // Wait for DOM to load
+    document.addEventListener('DOMContentLoaded', async () => {
+        // Simulate loading
+        simulateLoading();
+        
         // Initialize app
-        async function initializeApp() {
-            // Get data from main process
-            const { bootstrappers, mods } = window.electron.getBootstrappers();
-            
-            // Initialize stats
-            initializeStats(bootstrappers, mods);
-            
-            // Initialize bootstrappers
-            initializeBootstrappers(bootstrappers);
-            
-            // Initialize mods
-            initializeMods(mods);
-            
-            // Initialize contributors
-            initializeContributors();
-            
-            // Start auto-update checks
-            startAutoUpdateChecks();
-            
-            // Load stored versions
-            loadStoredVersions();
-        }
+        await initializeApp();
+    });
 
-        // Initialize statistics
-        function initializeStats(bootstrappers, mods) {
-            const stats = {
-                total: bootstrappers.length + mods.length,
-                windows: [...bootstrappers, ...mods].filter(item => item.platform === "Windows").length,
-                android: [...bootstrappers, ...mods].filter(item => item.platform === "Android").length,
-                macos: [...bootstrappers, ...mods].filter(item => item.platform === "MacOS").length,
-                ios: [...bootstrappers, ...mods].filter(item => item.platform === "iOS").length,
-                linux: [...bootstrappers, ...mods].filter(item => item.platform === "Linux").length,
-            };
+    // Loading simulation
+    function simulateLoading() {
+        let progress = 0;
+        const progressBar = document.getElementById('loadingProgress');
+        const loadingText = document.getElementById('loadingText');
+        
+        const interval = setInterval(() => {
+            progress += Math.random() * 10;
+            if (progress >= 100) {
+                progress = 100;
+                clearInterval(interval);
+                
+                progressBar.style.width = '100%';
+                loadingText.textContent = 'Ready';
+                
+                setTimeout(() => {
+                    document.getElementById('loadingScreen').style.display = 'none';
+                    document.getElementById('appContainer').style.display = 'block';
+                    initializeAnimations();
+                }, 800);
+            } else {
+                progressBar.style.width = `${progress}%`;
+                loadingText.textContent = `Loading ${Math.floor(progress)}%`;
+            }
+        }, 100);
+    }
 
-            const statItems = [
-                { 
-                    label: "Total Launchers", 
-                    value: stats.total, 
-                    icon: "https://i.ibb.co/zTFZDhbR/status-strap-christmas-b.png"
-                },
-                { 
-                    label: "Windows", 
-                    value: stats.windows, 
-                    icon: "https://upload.wikimedia.org/wikipedia/commons/8/87/Windows_logo_-_2021.svg"
-                },
-                { 
-                    label: "Android", 
-                    value: stats.android, 
-                    icon: "https://upload.wikimedia.org/wikipedia/commons/d/d7/Android_robot.svg"
-                },
-                { 
-                    label: "MacOS", 
-                    value: stats.macos, 
-                    icon: "https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg"
-                },
-                { 
-                    label: "iOS", 
-                    value: stats.ios, 
-                    icon: "https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg"
-                },
-                { 
-                    label: "Linux", 
-                    value: stats.linux, 
-                    icon: "https://upload.wikimedia.org/wikipedia/commons/3/35/Tux.svg"
-                },
-            ];
-
-            const statsGrid = document.getElementById('statsGrid');
-            statsGrid.innerHTML = statItems.map(stat => `
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <img src="${stat.icon}" alt="${stat.label}">
-                    </div>
-                    <div class="stat-value">${stat.value}</div>
-                    <div class="stat-label">${stat.label}</div>
-                </div>
-            `).join('');
-        }
-
+    // Initialize app
+    async function initializeApp() {
+        // Get data from main process
+        const { bootstrappers, mods } = window.electron.getBootstrappers();
+        
+        // Initialize stats
+        initializeStats(bootstrappers, mods);
+        
         // Initialize bootstrappers
-        function initializeBootstrappers(bootstrappers) {
-            const grid = document.getElementById('bootstrappersGrid');
-            grid.innerHTML = bootstrappers.map((item, index) => createCardHTML(item, index)).join('');
-            
-            // Load GitHub data for each bootstrapper
-            bootstrappers.forEach((item, index) => {
-                if (item.githubRepo) {
-                    fetchGitHubData(item, index, 'bootstrapper');
-                }
-            });
-        }
-
+        initializeBootstrappers(bootstrappers);
+        
         // Initialize mods
-        function initializeMods(mods) {
-            const grid = document.getElementById('modsGrid');
-            grid.innerHTML = mods.map((item, index) => createCardHTML(item, index)).join('');
-        }
-
-        // Create card HTML
-        function createCardHTML(item, index) {
-            const isDisabled = !item.working;
-            const typeClass = item.type === "Mod" ? "mod" : "";
-            
-            return `
-                <div class="card ${isDisabled ? 'disabled' : ''}" id="card-${index}">
-                    ${item.isPrerelease ? '<div class="prerelease-banner">PRE-RELEASE</div>' : ''}
-                    
-                    <div class="card-header">
-                        <div class="card-icon">
-                            <img src="${item.image}" alt="${item.title}">
-                        </div>
-                        <div class="card-title">
-                            <h3>${item.title}</h3>
-                            <div class="card-tags">
-                                ${item.tags.map(tag => `
-                                    <span class="tag ${tag === 'Recommended' ? 'recommended' : 'regular'}">${tag}</span>
-                                `).join('')}
-                            </div>
-                        </div>
-                        <div class="card-badges">
-                            <span class="badge version" id="version-${index}">Loading...</span>
-                            <span class="badge status ${isDisabled ? 'offline' : ''}">${isDisabled ? 'OFFLINE' : 'WORKING'}</span>
-                            <span class="badge type ${typeClass}">${item.type}</span>
-                        </div>
-                    </div>
-                    
-                    <p class="card-description">${item.description || 'No description available.'}</p>
-                    
-                    <div class="card-stats">
-                        <div class="stat-item">
-                            <div class="stat-label">Platform</div>
-                            <div class="stat-value">${item.platform}</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-label">Updated</div>
-                            <div class="stat-value" id="updated-${index}">Loading...</div>
-                        </div>
-                    </div>
-                    
-                    <div class="card-actions">
-                        <button class="download-button" onclick="downloadBootstrapper(${index})" ${isDisabled ? 'disabled' : ''}>
-                            <img src="https://cdn-icons-png.flaticon.com/512/724/724933.png" alt="Download" style="width: 16px; height: 16px;">
-                            Download
-                        </button>
-                        <div class="button-row">
-                            ${item.discord ? `
-                                <button class="secondary-button" onclick="joinDiscord('${item.discord}')" ${isDisabled ? 'disabled' : ''}>
-                                    <img src="https://cdn-icons-png.flaticon.com/512/5968/5968756.png" alt="Discord" style="width: 16px; height: 16px;">
-                                    Discord
-                                </button>
-                            ` : ''}
-                            ${item.githubRepo ? `
-                                <button class="secondary-button" onclick="openGitHub('${item.githubRepo}')" ${isDisabled ? 'disabled' : ''}>
-                                    <img src="https://cdn-icons-png.flaticon.com/512/25/25231.png" alt="GitHub" style="width: 16px; height: 16px;">
-                                    GitHub
-                                </button>
-                            ` : ''}
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
+        initializeMods(mods);
+        
         // Initialize contributors
-        function initializeContributors() {
-            const contributors = [
-                { 
-                    name: "Smilez", 
-                    role: "StatusStrap Founder & Dev",
-                    avatar: "https://i.ibb.co/chtLPThG/smilez.png" 
-                },
-                { 
-                    name: "𝓈𝓃𝒶𝓀𝓏", 
-                    role: "OG Admin (Been There Since Day 1)", 
-                    avatar: "https://i.ibb.co/d4QLKR3f/snakz.png" 
-                },
-                { 
-                    name: "Caleb", 
-                    role: "Admin", 
-                    avatar: "https://i.ibb.co/PzMF78CC/caleb.png" 
-                },
-                { 
-                    name: "qu7s", 
-                    role: "Domain Hoster", 
-                    avatar: "https://i.ibb.co/qMPHrFSy/qu7s.png" 
-                },
-                { 
-                    name: "xnox67", 
-                    role: "Domain Hoster", 
-                    avatar: "https://i.ibb.co/ZR73b443/xnox67.png" 
-                },
-            ];
+        initializeContributors();
+        
+        // Start auto-update checks
+        startAutoUpdateChecks();
+        
+        // Load stored versions
+        loadStoredVersions();
+        
+        // Listen for bootstrapper updates from main process
+        window.electron.onBootstrapperUpdated((data) => {
+            console.log('Bootstrapper updated:', data);
+            showUpdateNotification(data.title, 'Unknown', data.version);
+        });
+    }
 
-            const grid = document.getElementById('contributorsGrid');
-            grid.innerHTML = contributors.map(contributor => `
-                <div class="contributor-card">
-                    <div class="contributor-avatar">
-                        <img src="${contributor.avatar}" alt="${contributor.name}">
-                    </div>
-                    <div class="contributor-name">${contributor.name}</div>
-                    <div class="contributor-role">${contributor.role}</div>
+    // Initialize statistics
+    function initializeStats(bootstrappers, mods) {
+        const stats = {
+            total: bootstrappers.length + mods.length,
+            windows: [...bootstrappers, ...mods].filter(item => item.platform === "Windows").length,
+            android: [...bootstrappers, ...mods].filter(item => item.platform === "Android").length,
+            macos: [...bootstrappers, ...mods].filter(item => item.platform === "MacOS").length,
+            ios: [...bootstrappers, ...mods].filter(item => item.platform === "iOS").length,
+            linux: [...bootstrappers, ...mods].filter(item => item.platform === "Linux").length,
+        };
+
+        const statItems = [
+            { 
+                label: "Total Launchers", 
+                value: stats.total, 
+                icon: "https://i.ibb.co/zTFZDhbR/status-strap-christmas-b.png"
+            },
+            { 
+                label: "Windows", 
+                value: stats.windows, 
+                icon: "https://upload.wikimedia.org/wikipedia/commons/8/87/Windows_logo_-_2021.svg"
+            },
+            { 
+                label: "Android", 
+                value: stats.android, 
+                icon: "https://upload.wikimedia.org/wikipedia/commons/d/d7/Android_robot.svg"
+            },
+            { 
+                label: "MacOS", 
+                value: stats.macos, 
+                icon: "https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg"
+            },
+            { 
+                label: "iOS", 
+                value: stats.ios, 
+                icon: "https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg"
+            },
+            { 
+                label: "Linux", 
+                value: stats.linux, 
+                icon: "https://upload.wikimedia.org/wikipedia/commons/3/35/Tux.svg"
+            },
+        ];
+
+        const statsGrid = document.getElementById('statsGrid');
+        statsGrid.innerHTML = statItems.map(stat => `
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <img src="${stat.icon}" alt="${stat.label}">
                 </div>
-            `).join('');
-        }
+                <div class="stat-value">${stat.value}</div>
+                <div class="stat-label">${stat.label}</div>
+            </div>
+        `).join('');
+    }
 
-        // Fetch GitHub data
-        async function fetchGitHubData(item, index, type) {
-            try {
-                const versionElement = document.getElementById(`version-${index}`);
-                const updatedElement = document.getElementById(`updated-${index}`);
+    // Initialize bootstrappers
+    function initializeBootstrappers(bootstrappers) {
+        const grid = document.getElementById('bootstrappersGrid');
+        grid.innerHTML = bootstrappers.map((item, index) => createCardHTML(item, index)).join('');
+        
+        // Load GitHub data for each bootstrapper
+        bootstrappers.forEach((item, index) => {
+            if (item.githubRepo) {
+                fetchGitHubData(item, index, 'bootstrapper');
+            }
+        });
+    }
+
+    // Initialize mods
+    function initializeMods(mods) {
+        const grid = document.getElementById('modsGrid');
+        grid.innerHTML = mods.map((item, index) => createCardHTML(item, index)).join('');
+        
+        // For mods without GitHub repos, set default values
+        mods.forEach((item, index) => {
+            if (!item.githubRepo) {
+                const versionElement = document.getElementById(`version-${index + bootstrappers.length}`);
+                const updatedElement = document.getElementById(`updated-${index + bootstrappers.length}`);
+                if (versionElement) versionElement.textContent = 'Manual';
+                if (updatedElement) updatedElement.textContent = 'Manual Update';
+            }
+        });
+    }
+
+    // Create card HTML
+    function createCardHTML(item, index) {
+        const isDisabled = !item.working;
+        const typeClass = item.type === "Mod" ? "mod" : "";
+        
+        return `
+            <div class="card ${isDisabled ? 'disabled' : ''}" id="card-${index}">
+                ${item.isPrerelease ? '<div class="prerelease-banner">PRE-RELEASE</div>' : ''}
                 
-                versionElement.textContent = 'Fetching...';
-                updatedElement.textContent = 'Fetching...';
+                <div class="card-header">
+                    <div class="card-icon">
+                        <img src="${item.image}" alt="${item.title}" onerror="this.src='https://i.ibb.co/zTFZDhbR/status-strap-christmas-b.png'">
+                    </div>
+                    <div class="card-title">
+                        <h3>${item.title}</h3>
+                        <div class="card-tags">
+                            ${item.tags.map(tag => `
+                                <span class="tag ${tag === 'Recommended' ? 'recommended' : 'regular'}">${tag}</span>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div class="card-badges">
+                        <span class="badge version" id="version-${index}">Loading...</span>
+                        <span class="badge status ${isDisabled ? 'offline' : ''}">${isDisabled ? 'OFFLINE' : 'WORKING'}</span>
+                        <span class="badge type ${typeClass}">${item.type}</span>
+                    </div>
+                </div>
                 
-                const response = await window.electron.fetchGitHubRelease(item.githubRepo);
-                if (response.data && response.data.success) {
-                    versionElement.textContent = response.data.version;
-                    updatedElement.textContent = response.data.lastUpdated;
-                    
-                    // Check for updates
-                    checkForUpdate(item.title, response.data.version, response.data.description, item.platform, item.image, response.data.isPrerelease);
-                    
-                    // Update prerelease banner if needed
-                    if (response.data.isPrerelease) {
-                        const card = document.getElementById(`card-${index}`);
-                        if (!card.querySelector('.prerelease-banner')) {
-                            const banner = document.createElement('div');
-                            banner.className = 'prerelease-banner';
-                            banner.textContent = 'PRE-RELEASE';
-                            card.prepend(banner);
-                        }
+                <p class="card-description">${item.description || 'No description available.'}</p>
+                
+                <div class="card-stats">
+                    <div class="stat-item">
+                        <div class="stat-label">Platform</div>
+                        <div class="stat-value">${item.platform}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Updated</div>
+                        <div class="stat-value" id="updated-${index}">Loading...</div>
+                    </div>
+                </div>
+                
+                <div class="card-actions">
+                    <button class="download-button" onclick="downloadBootstrapper(${index})" ${isDisabled ? 'disabled' : ''}>
+                        <img src="https://cdn-icons-png.flaticon.com/512/724/724933.png" alt="Download" style="width: 16px; height: 16px;">
+                        Download
+                    </button>
+                    <div class="button-row">
+                        ${item.discord ? `
+                            <button class="secondary-button" onclick="joinDiscord('${item.discord}')" ${isDisabled ? 'disabled' : ''}>
+                                <img src="https://cdn-icons-png.flaticon.com/512/5968/5968756.png" alt="Discord" style="width: 16px; height: 16px;">
+                                Discord
+                            </button>
+                        ` : ''}
+                        ${item.githubRepo ? `
+                            <button class="secondary-button" onclick="openGitHub('${item.githubRepo}')" ${isDisabled ? 'disabled' : ''}>
+                                <img src="https://cdn-icons-png.flaticon.com/512/25/25231.png" alt="GitHub" style="width: 16px; height: 16px;">
+                                GitHub
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Initialize contributors
+    function initializeContributors() {
+        const contributors = [
+            { 
+                name: "Smilez", 
+                role: "StatusStrap Founder & Dev",
+                avatar: "https://i.ibb.co/chtLPThG/smilez.png" 
+            },
+            { 
+                name: "𝓈𝓃𝒶𝓀𝓏", 
+                role: "OG Admin (Been There Since Day 1)", 
+                avatar: "https://i.ibb.co/d4QLKR3f/snakz.png" 
+            },
+            { 
+                name: "Caleb", 
+                role: "Admin", 
+                avatar: "https://i.ibb.co/PzMF78CC/caleb.png" 
+            },
+            { 
+                name: "qu7s", 
+                role: "Domain Hoster", 
+                avatar: "https://i.ibb.co/qMPHrFSy/qu7s.png" 
+            },
+            { 
+                name: "xnox67", 
+                role: "Domain Hoster", 
+                avatar: "https://i.ibb.co/ZR73b443/xnox67.png" 
+            },
+        ];
+
+        const grid = document.getElementById('contributorsGrid');
+        grid.innerHTML = contributors.map(contributor => `
+            <div class="contributor-card">
+                <div class="contributor-avatar">
+                    <img src="${contributor.avatar}" alt="${contributor.name}" onerror="this.src='https://i.ibb.co/zTFZDhbR/status-strap-christmas-b.png'">
+                </div>
+                <div class="contributor-name">${contributor.name}</div>
+                <div class="contributor-role">${contributor.role}</div>
+            </div>
+        `).join('');
+    }
+
+    // Fetch GitHub data
+    async function fetchGitHubData(item, index, type) {
+        try {
+            const versionElement = document.getElementById(`version-${index}`);
+            const updatedElement = document.getElementById(`updated-${index}`);
+            
+            versionElement.textContent = 'Fetching...';
+            updatedElement.textContent = 'Fetching...';
+            
+            const response = await window.electron.fetchGitHubRelease(item.githubRepo);
+            if (response.data && response.data.success) {
+                versionElement.textContent = response.data.version;
+                updatedElement.textContent = response.data.lastUpdated;
+                
+                // Check for updates
+                checkForUpdate(item.title, response.data.version, response.data.description, item.platform, item.image, response.data.isPrerelease);
+                
+                // Update prerelease banner if needed
+                if (response.data.isPrerelease) {
+                    const card = document.getElementById(`card-${index}`);
+                    if (!card.querySelector('.prerelease-banner')) {
+                        const banner = document.createElement('div');
+                        banner.className = 'prerelease-banner';
+                        banner.textContent = 'PRE-RELEASE';
+                        card.prepend(banner);
                     }
-                } else {
-                    versionElement.textContent = 'Error';
-                    updatedElement.textContent = 'Check GitHub';
                 }
-            } catch (error) {
-                console.error('Error fetching GitHub data:', error);
-                const versionElement = document.getElementById(`version-${index}`);
-                const updatedElement = document.getElementById(`updated-${index}`);
+            } else {
                 versionElement.textContent = 'Error';
                 updatedElement.textContent = 'Check GitHub';
             }
+        } catch (error) {
+            console.error('Error fetching GitHub data:', error);
+            const versionElement = document.getElementById(`version-${index}`);
+            const updatedElement = document.getElementById(`updated-${index}`);
+            versionElement.textContent = 'Error';
+            updatedElement.textContent = 'Check GitHub';
         }
+    }
 
-        // Check for updates
-        async function checkForUpdate(title, version, description, platform, image, isPrerelease) {
-            const storedVersions = window.electron.getStoredVersions();
-            const oldVersion = storedVersions[title] || "Unknown";
+    // Check for updates
+    async function checkForUpdate(title, version, description, platform, image, isPrerelease) {
+        const storedVersions = window.electron.getStoredVersions();
+        const oldVersion = storedVersions[title] || "Unknown";
+        
+        if (oldVersion !== version && 
+            version !== "Unknown" && 
+            version !== "Error" && 
+            version !== "No Releases") {
             
-            if (oldVersion !== version && 
-                version !== "Unknown" && 
-                version !== "Error" && 
-                version !== "No Releases") {
-                
-                // Update stored version
-                storedVersions[title] = version;
-                window.electron.saveVersions(storedVersions);
-                
-                // Show notification
-                showUpdateNotification(title, oldVersion, version);
-                
-                // Send Discord notification
-                sendDiscordNotification(title, oldVersion, version, description, platform, image, isPrerelease);
-            }
-        }
-
-        // Show update notification
-        function showUpdateNotification(title, oldVersion, newVersion) {
-            const notification = document.getElementById('updateNotification');
-            notification.textContent = `${title} updated: ${oldVersion} → ${newVersion}`;
-            notification.style.display = 'block';
+            // Update stored version
+            storedVersions[title] = version;
+            window.electron.saveVersions(storedVersions);
             
-            setTimeout(() => {
-                notification.style.display = 'none';
-            }, 5000);
-        }
-
-        // Send Discord notification
-        async function sendDiscordNotification(title, oldVersion, newVersion, description, platform, image, isPrerelease) {
+            // Show notification
+            showUpdateNotification(title, oldVersion, version);
+            
+            // Send Discord notification
             try {
-                await window.electron.sendDiscordNotification(title, oldVersion, newVersion, description, platform, image, isPrerelease);
+                await window.electron.sendDiscordNotification(title, oldVersion, version, description, platform, image, isPrerelease);
             } catch (error) {
                 console.error('Error sending Discord notification:', error);
             }
         }
+    }
 
-        // Load stored versions
-        function loadStoredVersions() {
-            const storedVersions = window.electron.getStoredVersions();
-            return storedVersions;
-        }
+    // Show update notification
+    function showUpdateNotification(title, oldVersion, newVersion) {
+        const notification = document.getElementById('updateNotification');
+        notification.textContent = `${title} updated: ${oldVersion} → ${newVersion}`;
+        notification.style.display = 'block';
+        
+        setTimeout(() => {
+            notification.style.display = 'none';
+        }, 5000);
+    }
 
-        // Start auto-update checks
-        function startAutoUpdateChecks() {
-            // Check every 10 minutes
-            setInterval(() => {
-                window.electron.checkUpdates();
-            }, 10 * 60 * 1000);
+    // Load stored versions
+    function loadStoredVersions() {
+        const storedVersions = window.electron.getStoredVersions();
+        return storedVersions;
+    }
+
+    // Start auto-update checks
+    function startAutoUpdateChecks() {
+        // Update status text every minute
+        setInterval(() => {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('statusText').textContent = `Active • Last: ${timeString}`;
+        }, 60000);
+    }
+
+    // Initialize animations
+    function initializeAnimations() {
+        const cards = document.querySelectorAll('.card, .stat-card, .contributor-card');
+        cards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
             
-            // Update status text
-            setInterval(() => {
-                const now = new Date();
-                const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                document.getElementById('statusText').textContent = `Active • Last: ${timeString}`;
-            }, 60000);
-        }
+            setTimeout(() => {
+                card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 100);
+        });
+    }
 
-        // Initialize animations
-        function initializeAnimations() {
-            const cards = document.querySelectorAll('.card, .stat-card, .contributor-card');
-            cards.forEach((card, index) => {
-                card.style.opacity = '0';
-                card.style.transform = 'translateY(20px)';
-                
-                setTimeout(() => {
-                    card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
-                    card.style.opacity = '1';
-                    card.style.transform = 'translateY(0)';
-                }, index * 100);
+    // Filter cards based on search
+    function filterCards() {
+        const searchInput = document.getElementById('searchInput');
+        const query = searchInput.value.toLowerCase();
+        
+        const cards = document.querySelectorAll('.card');
+        cards.forEach(card => {
+            const title = card.querySelector('h3').textContent.toLowerCase();
+            const description = card.querySelector('.card-description').textContent.toLowerCase();
+            const tags = Array.from(card.querySelectorAll('.tag')).map(tag => tag.textContent.toLowerCase());
+            
+            const matches = title.includes(query) || 
+                           description.includes(query) || 
+                           tags.some(tag => tag.includes(query));
+            
+            card.style.display = matches ? 'block' : 'none';
+        });
+    }
+
+    // Scroll to section
+    function scrollToSection(sectionId) {
+        const section = document.getElementById(sectionId);
+        if (section) {
+            const mainContent = document.getElementById('mainContent');
+            const offsetTop = section.offsetTop - 80;
+            mainContent.scrollTo({
+                top: offsetTop,
+                behavior: 'smooth'
             });
         }
+    }
 
-        // Filter cards based on search
-        function filterCards() {
-            const searchInput = document.getElementById('searchInput');
-            const query = searchInput.value.toLowerCase();
-            
-            const cards = document.querySelectorAll('.card');
-            cards.forEach(card => {
-                const title = card.querySelector('h3').textContent.toLowerCase();
-                const description = card.querySelector('.card-description').textContent.toLowerCase();
-                const tags = Array.from(card.querySelectorAll('.tag')).map(tag => tag.textContent.toLowerCase());
-                
-                const matches = title.includes(query) || 
-                               description.includes(query) || 
-                               tags.some(tag => tag.includes(query));
-                
-                card.style.display = matches ? 'block' : 'none';
-            });
+    // Download bootstrapper
+    function downloadBootstrapper(index) {
+        const { bootstrappers, mods } = window.electron.getBootstrappers();
+        const allItems = [...bootstrappers, ...mods];
+        const item = allItems[index];
+        
+        if (item && item.working) {
+            window.electron.downloadBootstrapper(item);
         }
+    }
 
-        // Scroll to section
-        function scrollToSection(sectionId) {
-            const section = document.getElementById(sectionId);
-            if (section) {
-                const mainContent = document.getElementById('mainContent');
-                const offsetTop = section.offsetTop - 80;
-                mainContent.scrollTo({
-                    top: offsetTop,
-                    behavior: 'smooth'
-                });
-            }
+    // Join Discord
+    function joinDiscord(url) {
+        window.electron.joinDiscord(url);
+    }
+
+    // Open GitHub
+    function openGitHub(repo) {
+        window.electron.openGitHub(repo);
+    }
+
+    // Open bootstrapper page
+    function openBootstrapper(title) {
+        const { bootstrappers, mods } = window.electron.getBootstrappers();
+        const allItems = [...bootstrappers, ...mods];
+        const item = allItems.find(i => i.title === title);
+        
+        if (item) {
+            window.electron.openExternal(item.website);
         }
+    }
 
-        // Download bootstrapper
-        function downloadBootstrapper(index) {
-            const { bootstrappers, mods } = window.electron.getBootstrappers();
-            const allItems = [...bootstrappers, ...mods];
-            const item = allItems[index];
-            
-            if (item && item.working) {
-                window.electron.downloadBootstrapper(item);
-            }
-        }
+    // Check for updates manually
+    function checkForUpdates() {
+        window.electron.checkUpdates();
+    }
 
-        // Join Discord
-        function joinDiscord(url) {
-            window.electron.joinDiscord(url);
-        }
-
-        // Open GitHub
-        function openGitHub(repo) {
-            window.electron.openGitHub(repo);
-        }
-
-        // Open bootstrapper page
-        function openBootstrapper(title) {
-            const { bootstrappers, mods } = window.electron.getBootstrappers();
-            const allItems = [...bootstrappers, ...mods];
-            const item = allItems.find(i => i.title === title);
-            
-            if (item) {
-                window.electron.openExternal(item.website);
-            }
-        }
-
-        // Check for updates manually
-        function checkForUpdates() {
-            window.electron.checkUpdates();
-        }
-
-        // Expose functions to window
-        window.scrollToSection = scrollToSection;
-        window.filterCards = filterCards;
-        window.downloadBootstrapper = downloadBootstrapper;
-        window.joinDiscord = joinDiscord;
-        window.openGitHub = openGitHub;
-        window.openBootstrapper = openBootstrapper;
-        window.checkForUpdates = checkForUpdates;
-    </script>
-</body>
-</html>
+    // Expose functions to window
+    window.scrollToSection = scrollToSection;
+    window.filterCards = filterCards;
+    window.downloadBootstrapper = downloadBootstrapper;
+    window.joinDiscord = joinDiscord;
+    window.openGitHub = openGitHub;
+    window.openBootstrapper = openBootstrapper;
+    window.checkForUpdates = checkForUpdates;
+</script>
