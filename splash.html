@@ -3,133 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
     body {
       margin: 0;
       background: #000;
       color: white;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: Arial;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
       text-align: center;
-      overflow: hidden;
-      opacity: 0;
-      animation: fadeIn 0.8s ease-out forwards;
     }
-
-    @keyframes fadeIn {
-      to { opacity: 1; }
-    }
-
-    .container { 
-      padding: 20px;
-      transform: scale(0.95);
-      animation: scaleIn 0.6s ease-out 0.4s forwards;
-    }
-
-    @keyframes scaleIn {
-      to { transform: scale(1); }
-    }
-
-    h1 { 
-      margin-bottom: 10px;
-      font-size: 48px;
-      font-weight: 600;
-      letter-spacing: 2px;
-      opacity: 0;
-      animation: slideDown 0.7s ease-out 0.6s forwards;
-    }
-
-    @keyframes slideDown {
-      from {
-        opacity: 0;
-        transform: translateY(-30px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    #version {
-      font-size: 14px;
-      opacity: 0.7;
-      margin-bottom: 30px;
-      opacity: 0;
-      animation: fadeInUp 0.6s ease-out 0.8s forwards;
-    }
-
-    #status { 
-      margin: 20px 0;
-      min-height: 24px;
-      font-size: 16px;
-      opacity: 0;
-      animation: fadeInUp 0.6s ease-out 1s forwards;
-      transition: opacity 0.5s ease, transform 0.5s ease;
-    }
-
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(15px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
+    .container { padding: 20px; }
+    h1 { margin-bottom: 10px; }
+    #status { margin: 20px 0; min-height: 24px; }
     .progress {
       width: 300px;
       height: 4px;
       background: #333;
       margin: 20px auto;
-      border-radius: 2px;
-      overflow: hidden;
-      opacity: 0;
-      animation: fadeInUp 0.6s ease-out 1.2s forwards;
     }
-
     .progress-bar {
       height: 100%;
       background: white;
       width: 0%;
-      transition: width 0.5s ease;
-      border-radius: 2px;
-    }
-
-    .spinner {
-      width: 35px;
-      height: 35px;
-      margin: 25px auto 0;
-      border: 3px solid #333;
-      border-top-color: white;
-      border-radius: 50%;
-      animation: spin 1s linear infinite, fadeInUp 0.6s ease-out 1.4s forwards;
-      opacity: 0;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    /* Transition state - slower fade out */
-    body.finishing {
-      animation: fadeOutShrink 1.2s ease-in-out forwards;
-    }
-
-    @keyframes fadeOutShrink {
-      to {
-        opacity: 0;
-        transform: scale(0.95);
-      }
+      transition: width 0.3s;
     }
   </style>
 </head>
@@ -141,7 +39,6 @@
     <div class="progress">
       <div class="progress-bar" id="progress"></div>
     </div>
-    <div class="spinner"></div>
   </div>
   
   <script>
@@ -151,24 +48,9 @@
     const version = ipcRenderer.sendSync('get-version');
     document.getElementById('version').textContent = `v${version}`;
     
-    // Update status with slower transition
+    // Update status
     ipcRenderer.on('status', (event, message) => {
-      const statusEl = document.getElementById('status');
-      statusEl.style.opacity = '0';
-      statusEl.style.transform = 'translateY(10px)';
-      
-      setTimeout(() => {
-        statusEl.textContent = message;
-        statusEl.style.opacity = '1';
-        statusEl.style.transform = 'translateY(0)';
-        
-        // If starting app, trigger smooth transition after showing message for longer
-        if (message.toLowerCase().includes('starting app')) {
-          setTimeout(() => {
-            document.body.classList.add('finishing');
-          }, 1500); // Show "Starting app..." for 1.5 seconds before fading
-        }
-      }, 300);
+      document.getElementById('status').textContent = message;
     });
     
     // Update progress
