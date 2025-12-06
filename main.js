@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const log = require('electron-log');
+const https = require('https');
 
 let splashWindow;
 let mainWindow;
@@ -26,14 +27,80 @@ function createSplash() {
   splashWindow.webContents.send('status', 'Starting StatusStrap...');
 }
 
-function createMainWindow() {
+async function getReleaseDate(version) {
+  return new Promise((resolve) => {
+    const options = {
+      hostname: 'api.github.com',
+      path: `/repos/Orbit-Softworks/statusstrap-app/releases/tags/v${version}`,
+      method: 'GET',
+      headers: {
+        'User-Agent': 'StatusStrap-App'
+      }
+    };
+
+    const req = https.request(options, (res) => {
+      let data = '';
+      
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
+      
+      res.on('end', () => {
+        try {
+          const release = JSON.parse(data);
+          if (release.published_at) {
+            const date = new Date(release.published_at);
+            const formatted = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
+            resolve(formatted);
+          } else {
+            resolve(null);
+          }
+        } catch (err) {
+          console.error('Failed to parse release date:', err);
+          resolve(null);
+        }
+      });
+    });
+
+    req.on('error', (err) => {
+      console.error('Failed to fetch release date:', err);
+      resolve(null);
+    });
+
+    // Timeout after 5 seconds
+    req.setTimeout(5000, () => {
+      req.destroy();
+      resolve(null);
+    });
+
+    req.end();
+  });
+}
+
+async function createMainWindow() {
+  const version = app.getVersion();
+  
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
     show: false,
-    title: `StatusStrap v${app.getVersion()}`
+    title: `StatusStrap | v${version} | Loading...`,
+    roundedCorners: true,
+    backgroundColor: '#ffffff'
   });
+  
   mainWindow.loadURL('https://statusstrap.live');
+  
+  // Fetch release date in the background
+  getReleaseDate(version).then(releaseDate => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      const title = releaseDate 
+        ? `StatusStrap | v${version} | ${releaseDate}`
+        : `StatusStrap | v${version}`;
+      mainWindow.setTitle(title);
+    }
+  });
+  
   mainWindow.once('ready-to-show', () => {
     if (splashWindow) splashWindow.close();
     mainWindow.show();
