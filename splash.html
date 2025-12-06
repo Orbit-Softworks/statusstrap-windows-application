@@ -44,16 +44,13 @@
   <script>
     const { ipcRenderer } = require('electron');
     
-    // Get version
     const version = ipcRenderer.sendSync('get-version');
     document.getElementById('version').textContent = `v${version}`;
     
-    // Update status
     ipcRenderer.on('status', (event, message) => {
       document.getElementById('status').textContent = message;
     });
     
-    // Update progress
     ipcRenderer.on('progress', (event, percent) => {
       document.getElementById('progress').style.width = percent + '%';
     });
