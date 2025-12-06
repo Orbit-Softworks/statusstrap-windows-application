@@ -1,7 +1,6 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const log = require('electron-log');
-const https = require('https');
 
 let splashWindow;
 let mainWindow;
@@ -27,151 +26,17 @@ function createSplash() {
   splashWindow.webContents.send('status', 'Starting StatusStrap...');
 }
 
-async function getReleaseDate(version) {
-  return new Promise((resolve) => {
-    const options = {
-      hostname: 'api.github.com',
-      path: `/repos/Orbit-Softworks/statusstrap-app/releases/tags/v${version}`,
-      method: 'GET',
-      headers: {
-        'User-Agent': 'StatusStrap-App'
-      }
-    };
-
-    const req = https.request(options, (res) => {
-      let data = '';
-      
-      res.on('data', (chunk) => {
-        data += chunk;
-      });
-      
-      res.on('end', () => {
-        try {
-          const release = JSON.parse(data);
-          if (release.published_at) {
-            const date = new Date(release.published_at);
-            const formatted = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
-            resolve(formatted);
-          } else {
-            resolve(null);
-          }
-        } catch (err) {
-          console.error('Failed to parse release date:', err);
-          resolve(null);
-        }
-      });
-    });
-
-    req.on('error', (err) => {
-      console.error('Failed to fetch release date:', err);
-      resolve(null);
-    });
-
-    // Timeout after 5 seconds
-    req.setTimeout(5000, () => {
-      req.destroy();
-      resolve(null);
-    });
-
-    req.end();
-  });
-}
-
-async function createMainWindow() {
-  const version = app.getVersion();
-  
+function createMainWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
     show: false,
-    title: `StatusStrap | v${version} | Loading...`,
-    roundedCorners: true,
-    backgroundColor: '#000000'
+    title: `StatusStrap v${app.getVersion()}`
   });
-  
   mainWindow.loadURL('https://statusstrap.live');
-  
-  // Fetch release date in the background
-  getReleaseDate(version).then(releaseDate => {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      const title = releaseDate 
-        ? `StatusStrap | v${version} | ${releaseDate}`
-        : `StatusStrap | v${version}`;
-      mainWindow.setTitle(title);
-    }
-  });
-  
   mainWindow.once('ready-to-show', () => {
-    if (splashWindow && !splashWindow.isDestroyed()) {
-      // Wait longer before starting transition (let user see "Starting app..." message)
-      setTimeout(() => {
-        if (splashWindow.isDestroyed()) {
-          mainWindow.show();
-          return;
-        }
-        
-        // Smooth transition from splash to main
-        const splashBounds = splashWindow.getBounds();
-        const targetBounds = { x: splashBounds.x - 350, y: splashBounds.y - 250, width: 1200, height: 800 };
-        
-        // Animate splash window resize (slower - 40 steps instead of 20)
-        let steps = 40;
-        let currentStep = 0;
-        
-        const resizeInterval = setInterval(() => {
-          if (currentStep >= steps || splashWindow.isDestroyed()) {
-            clearInterval(resizeInterval);
-            
-            if (!splashWindow.isDestroyed()) {
-              // Position main window at final location
-              mainWindow.setBounds(targetBounds);
-              mainWindow.setOpacity(0);
-              mainWindow.show();
-              
-              // Wait a moment with black screen
-              setTimeout(() => {
-                // Close splash
-                if (!splashWindow.isDestroyed()) {
-                  splashWindow.close();
-                }
-                
-                // Fade in main window slowly
-                let opacity = 0;
-                const fadeInterval = setInterval(() => {
-                  opacity += 0.02; // Slower fade (was 0.05)
-                  if (opacity >= 1) {
-                    mainWindow.setOpacity(1);
-                    clearInterval(fadeInterval);
-                  } else {
-                    mainWindow.setOpacity(opacity);
-                  }
-                }, 20); // Slightly slower interval
-              }, 300); // Show black screen for 300ms
-            }
-            return;
-          }
-          
-          currentStep++;
-          const progress = currentStep / steps;
-          const easeProgress = progress < 0.5 
-            ? 2 * progress * progress 
-            : 1 - Math.pow(-2 * progress + 2, 2) / 2; // easeInOutQuad
-          
-          const newBounds = {
-            x: Math.round(splashBounds.x + (targetBounds.x - splashBounds.x) * easeProgress),
-            y: Math.round(splashBounds.y + (targetBounds.y - splashBounds.y) * easeProgress),
-            width: Math.round(splashBounds.width + (targetBounds.width - splashBounds.width) * easeProgress),
-            height: Math.round(splashBounds.height + (targetBounds.height - splashBounds.height) * easeProgress)
-          };
-          
-          if (!splashWindow.isDestroyed()) {
-            splashWindow.setBounds(newBounds);
-          }
-        }, 20); // Slightly slower (was 16ms)
-      }, 2000); // Wait 2 seconds after main window is ready before starting transition
-    } else {
-      mainWindow.show();
-    }
+    if (splashWindow) splashWindow.close();
+    mainWindow.show();
   });
 }
 
