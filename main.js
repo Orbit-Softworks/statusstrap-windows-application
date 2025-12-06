@@ -14,13 +14,11 @@ autoUpdater.logger = log;
 autoUpdater.logger.transports.file.level = 'info';
 
 // ===== AUTO-UPDATER CONFIGURATION =====
-// Configure auto-updater
 autoUpdater.autoDownload = true;
 autoUpdater.autoInstallOnAppQuit = true;
 autoUpdater.allowDowngrade = false;
 autoUpdater.fullChangelog = true;
 
-// Set the feed URL for GitHub
 autoUpdater.setFeedURL({
   provider: 'github',
   owner: 'Orbit-Softworks',
@@ -28,22 +26,12 @@ autoUpdater.setFeedURL({
   releaseType: 'release'
 });
 
-// Add these event handlers
 autoUpdater.on('checking-for-update', () => {
   console.log('Checking for app updates...');
-  if (mainWindow) {
-    mainWindow.webContents.send('app-update-checking');
-  }
 });
 
 autoUpdater.on('update-available', (info) => {
   console.log('App update available:', info.version);
-  // Show notification to user
-  if (mainWindow) {
-    mainWindow.webContents.send('app-update-available', info.version);
-  }
-  
-  // Show desktop notification
   showDesktopNotification(
     'StatusStrap Update Available!',
     `Version ${info.version} is ready to download`,
@@ -53,46 +41,31 @@ autoUpdater.on('update-available', (info) => {
 
 autoUpdater.on('update-not-available', (info) => {
   console.log('App update not available');
-  if (mainWindow) {
-    mainWindow.webContents.send('app-update-not-available');
-  }
 });
 
 autoUpdater.on('download-progress', (progressObj) => {
   console.log('App download progress:', progressObj.percent);
-  if (mainWindow) {
-    mainWindow.webContents.send('app-download-progress', progressObj.percent);
-  }
 });
 
 autoUpdater.on('update-downloaded', (info) => {
   console.log('App update downloaded:', info.version);
   
-  if (mainWindow) {
-    mainWindow.webContents.send('app-update-downloaded', info.version);
-    
-    // Ask user to restart
-    dialog.showMessageBox(mainWindow, {
-      type: 'info',
-      title: 'Update Ready',
-      message: `Version ${info.version} has been downloaded. Restart the application to apply the update.`,
-      buttons: ['Restart Now', 'Later']
-    }).then((result) => {
-      if (result.response === 0) {
-        autoUpdater.quitAndInstall();
-      }
-    });
-  }
+  dialog.showMessageBox(mainWindow, {
+    type: 'info',
+    title: 'Update Ready',
+    message: `Version ${info.version} has been downloaded. Restart the application to apply the update.`,
+    buttons: ['Restart Now', 'Later']
+  }).then((result) => {
+    if (result.response === 0) {
+      autoUpdater.quitAndInstall();
+    }
+  });
 });
 
 autoUpdater.on('error', (err) => {
   console.error('App update error:', err);
-  if (mainWindow) {
-    mainWindow.webContents.send('app-update-error', err.message);
-  }
 });
 
-// Function to check for app updates
 function checkForAppUpdates() {
   if (process.env.NODE_ENV === 'development') {
     console.log('Skipping auto-update check in development');
@@ -103,7 +76,7 @@ function checkForAppUpdates() {
   autoUpdater.checkForUpdatesAndNotify();
 }
 
-// ===== BOOTSTRAPPER & MOD DATA (Updated with exact descriptions from your website) =====
+// ===== BOOTSTRAPPER & MOD DATA =====
 const bootstrappers = [
   {
     title: "Fishstrap",
@@ -264,7 +237,6 @@ const bootstrappers = [
 ];
 
 const mods = [
-  // Add your mods here if you have any
   {
     title: "Synapse X",
     githubRepo: "",
@@ -401,7 +373,6 @@ function extractVersion(text) {
 
 async function sendDiscordNotification(launcher, oldVersion, newVersion, description, platform, image, isPrerelease = false) {
   try {
-    // Replace with your actual Discord webhook URL
     const webhookUrl = process.env.DISCORD_WEBHOOK || "";
     
     if (!webhookUrl) {
@@ -512,26 +483,18 @@ function createWindow() {
     trafficLightPosition: { x: 15, y: 13 }
   });
 
-  // Load the HTML file with embedded CSS and JS
   mainWindow.loadFile('index.html');
 
-  // Show window when ready
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
-    
-    // Start auto-update checks for bootstrappers
     startAutoUpdateChecks();
-    
-    // Check for app updates
     checkForAppUpdates();
     
-    // DevTools for development
     if (process.env.NODE_ENV === 'development') {
       mainWindow.webContents.openDevTools();
     }
   });
 
-  // Handle external links
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (url.startsWith('http')) {
       shell.openExternal(url);
@@ -540,10 +503,7 @@ function createWindow() {
     return { action: 'allow' };
   });
 
-  // Create application menu
   createMenu();
-
-  // Create system tray
   createTray();
 }
 
@@ -564,24 +524,20 @@ async function checkAllBootstrappers() {
             const oldVersion = storedVersions[bootstrapper.title] || "Unknown";
             const newVersion = releaseData.version;
             
-            // Check if version changed
             if (oldVersion !== newVersion && 
                 newVersion !== "Unknown" && 
                 newVersion !== "Error" && 
                 newVersion !== "No Releases") {
               
-              // Update stored version
               storedVersions[bootstrapper.title] = newVersion;
               saveVersions(storedVersions);
               
-              // Send desktop notification
               showDesktopNotification(
                 `${bootstrapper.title} Update Available!`,
                 `Updated from ${oldVersion} to ${newVersion}`,
                 bootstrapper.image
               );
               
-              // Send Discord notification
               await sendDiscordNotification(
                 bootstrapper.title,
                 oldVersion,
@@ -592,7 +548,6 @@ async function checkAllBootstrappers() {
                 releaseData.isPrerelease
               );
               
-              // Update UI if window is loaded
               if (mainWindow) {
                 mainWindow.webContents.send('bootstrapper-updated', {
                   title: bootstrapper.title,
@@ -609,7 +564,6 @@ async function checkAllBootstrappers() {
           console.error(`Error checking ${bootstrapper.title}:`, error);
         }
         
-        // Rate limiting delay
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
     }
@@ -619,10 +573,7 @@ async function checkAllBootstrappers() {
 }
 
 function startAutoUpdateChecks() {
-  // Check immediately on start
   checkAllBootstrappers();
-  
-  // Check every 10 minutes
   updateInterval = setInterval(checkAllBootstrappers, 10 * 60 * 1000);
 }
 
@@ -644,14 +595,7 @@ function createMenu() {
         },
         { type: 'separator' },
         {
-          label: 'Check for App Updates',
-          click: () => {
-            checkForAppUpdates();
-          }
-        },
-        { type: 'separator' },
-        {
-          label: 'Check for Bootstrapper Updates',
+          label: 'Check for Updates',
           click: async () => {
             if (mainWindow) {
               mainWindow.webContents.send('checking-updates');
@@ -687,119 +631,11 @@ function createMenu() {
         },
         { type: 'separator' },
         {
-          label: 'Toggle Full Screen',
-          accelerator: 'F11',
-          click: () => {
-            if (mainWindow) {
-              mainWindow.setFullScreen(!mainWindow.isFullScreen());
-            }
-          }
-        },
-        { type: 'separator' },
-        {
           label: 'Toggle Developer Tools',
           accelerator: 'CmdOrCtrl+Shift+I',
           click: () => {
             if (mainWindow) {
               mainWindow.webContents.toggleDevTools();
-            }
-          }
-        }
-      ]
-    },
-    {
-      label: 'Navigation',
-      submenu: [
-        {
-          label: 'Home',
-          accelerator: 'CmdOrCtrl+H',
-          click: () => {
-            if (mainWindow) {
-              mainWindow.webContents.executeJavaScript(`
-                scrollToSection('home');
-              `);
-            }
-          }
-        },
-        {
-          label: 'Bootstrappers',
-          accelerator: 'CmdOrCtrl+B',
-          click: () => {
-            if (mainWindow) {
-              mainWindow.webContents.executeJavaScript(`
-                scrollToSection('bootstrappers');
-              `);
-            }
-          }
-        },
-        {
-          label: 'Mods',
-          accelerator: 'CmdOrCtrl+M',
-          click: () => {
-            if (mainWindow) {
-              mainWindow.webContents.executeJavaScript(`
-                scrollToSection('mods');
-              `);
-            }
-          }
-        },
-        {
-          label: 'Credits',
-          accelerator: 'CmdOrCtrl+C',
-          click: () => {
-            if (mainWindow) {
-              mainWindow.webContents.executeJavaScript(`
-                scrollToSection('credits');
-              `);
-            }
-          }
-        }
-      ]
-    },
-    {
-      label: 'Bootstrappers',
-      submenu: bootstrappers.map(b => ({
-        label: b.title,
-        enabled: b.working,
-        click: () => {
-          if (mainWindow) {
-            mainWindow.webContents.executeJavaScript(`
-              openBootstrapper('${b.title}');
-            `);
-          }
-        }
-      }))
-    },
-    {
-      label: 'Tools',
-      submenu: [
-        {
-          label: 'Clear Cache',
-          click: () => {
-            if (mainWindow) {
-              mainWindow.webContents.session.clearCache().then(() => {
-                dialog.showMessageBox(mainWindow, {
-                  type: 'info',
-                  title: 'Cache Cleared',
-                  message: 'Application cache has been cleared successfully.',
-                  buttons: ['OK']
-                });
-              });
-            }
-          }
-        },
-        {
-          label: 'Clear Version History',
-          click: () => {
-            const versionFilePath = path.join(app.getPath('userData'), 'versions.json');
-            if (fs.existsSync(versionFilePath)) {
-              fs.unlinkSync(versionFilePath);
-              dialog.showMessageBox(mainWindow, {
-                type: 'info',
-                title: 'History Cleared',
-                message: 'Version history has been cleared.',
-                buttons: ['OK']
-              });
             }
           }
         }
@@ -818,19 +654,6 @@ function createMenu() {
           label: 'Discord Server',
           click: () => {
             shell.openExternal('https://discord.gg/statusstrap');
-          }
-        },
-        {
-          label: 'GitHub',
-          click: () => {
-            shell.openExternal('https://github.com/Orbit-Softworks/statusstrap-windows-application');
-          }
-        },
-        { type: 'separator' },
-        {
-          label: 'Report Issue',
-          click: () => {
-            shell.openExternal('https://github.com/Orbit-Softworks/statusstrap-windows-application/issues');
           }
         }
       ]
@@ -857,40 +680,6 @@ function createTray() {
             mainWindow.focus();
           }
         }
-      },
-      { type: 'separator' },
-      {
-        label: 'Check for App Updates',
-        click: () => {
-          checkForAppUpdates();
-        }
-      },
-      {
-        label: 'Check Bootstrapper Updates',
-        click: async () => {
-          if (mainWindow) {
-            mainWindow.webContents.send('checking-updates');
-            await checkAllBootstrappers();
-            mainWindow.webContents.send('updates-checked');
-          }
-        }
-      },
-      { type: 'separator' },
-      {
-        label: 'Bootstrappers',
-        submenu: bootstrappers.slice(0, 5).map(b => ({
-          label: b.title,
-          enabled: b.working,
-          click: () => {
-            if (mainWindow) {
-              mainWindow.show();
-              mainWindow.focus();
-              mainWindow.webContents.executeJavaScript(`
-                openBootstrapper('${b.title}');
-              `);
-            }
-          }
-        }))
       },
       { type: 'separator' },
       {
@@ -949,12 +738,10 @@ ipcMain.on('open-external', (event, url) => {
 });
 
 ipcMain.on('download-bootstrapper', (event, bootstrapper) => {
-  // Open download page in default browser
   if (bootstrapper.website) {
     shell.openExternal(bootstrapper.website);
   }
   
-  // Show notification
   showDesktopNotification(
     `Downloading ${bootstrapper.title}`,
     'Opening download page in your browser...',
@@ -976,63 +763,21 @@ ipcMain.on('check-updates', async (event) => {
   event.reply('update-check-completed');
 });
 
-// Discord notification handler
 ipcMain.on('send-discord-notification', async (event, title, oldVersion, newVersion, description, platform, image, isPrerelease) => {
   const success = await sendDiscordNotification(title, oldVersion, newVersion, description, platform, image, isPrerelease);
   event.reply('discord-notification-sent', success);
 });
 
-// Handle bootstrapper-updated events from frontend
 ipcMain.on('bootstrapper-updated', (event, data) => {
   console.log('Bootstrapper updated from frontend:', data);
 });
 
-// ===== APP AUTO-UPDATE IPC HANDLERS =====
-ipcMain.on('check-app-update', () => {
-  checkForAppUpdates();
-});
-
-ipcMain.on('restart-and-update', () => {
-  autoUpdater.quitAndInstall();
-});
-
-ipcMain.on('get-app-version', (event) => {
-  event.returnValue = app.getVersion();
-});
-
-// App update event forwarders
-ipcMain.on('app-update-checking', (event) => {
-  event.reply('app-update-checking');
-});
-
-ipcMain.on('app-update-available', (event, version) => {
-  event.reply('app-update-available', version);
-});
-
-ipcMain.on('app-update-not-available', (event) => {
-  event.reply('app-update-not-available');
-});
-
-ipcMain.on('app-download-progress', (event, progress) => {
-  event.reply('app-download-progress', progress);
-});
-
-ipcMain.on('app-update-downloaded', (event, version) => {
-  event.reply('app-update-downloaded', version);
-});
-
-ipcMain.on('app-update-error', (event, error) => {
-  event.reply('app-update-error', error);
-});
-
 // ===== APP EVENT HANDLERS =====
 app.whenReady().then(() => {
-  // Set app name
   if (process.platform === 'darwin') {
     app.setName('StatusStrap');
   }
   
-  // Create window
   createWindow();
   
   app.on('activate', () => {
@@ -1049,13 +794,11 @@ app.on('window-all-closed', () => {
 });
 
 app.on('before-quit', () => {
-  // Clean up intervals
   if (updateInterval) {
     clearInterval(updateInterval);
   }
 });
 
-// Prevent multiple instances
 const gotTheLock = app.requestSingleInstanceLock();
 
 if (!gotTheLock) {
@@ -1069,7 +812,6 @@ if (!gotTheLock) {
   });
 }
 
-// IPC handler for splash screen
 ipcMain.on('get-version', (event) => {
   event.returnValue = app.getVersion();
 });
