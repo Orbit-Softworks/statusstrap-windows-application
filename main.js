@@ -13,6 +13,96 @@ let versionsCache = {};
 autoUpdater.logger = log;
 autoUpdater.logger.transports.file.level = 'info';
 
+// ===== AUTO-UPDATER CONFIGURATION =====
+// Configure auto-updater
+autoUpdater.autoDownload = true;
+autoUpdater.autoInstallOnAppQuit = true;
+autoUpdater.allowDowngrade = false;
+autoUpdater.fullChangelog = true;
+
+// Set the feed URL for GitHub
+autoUpdater.setFeedURL({
+  provider: 'github',
+  owner: 'Orbit-Softworks',
+  repo: 'statusstrap-windows-application',
+  releaseType: 'release'
+});
+
+// Add these event handlers
+autoUpdater.on('checking-for-update', () => {
+  console.log('Checking for app updates...');
+  if (mainWindow) {
+    mainWindow.webContents.send('app-update-checking');
+  }
+});
+
+autoUpdater.on('update-available', (info) => {
+  console.log('App update available:', info.version);
+  // Show notification to user
+  if (mainWindow) {
+    mainWindow.webContents.send('app-update-available', info.version);
+  }
+  
+  // Show desktop notification
+  showDesktopNotification(
+    'StatusStrap Update Available!',
+    `Version ${info.version} is ready to download`,
+    path.join(__dirname, 'icon.png')
+  );
+});
+
+autoUpdater.on('update-not-available', (info) => {
+  console.log('App update not available');
+  if (mainWindow) {
+    mainWindow.webContents.send('app-update-not-available');
+  }
+});
+
+autoUpdater.on('download-progress', (progressObj) => {
+  console.log('App download progress:', progressObj.percent);
+  if (mainWindow) {
+    mainWindow.webContents.send('app-download-progress', progressObj.percent);
+  }
+});
+
+autoUpdater.on('update-downloaded', (info) => {
+  console.log('App update downloaded:', info.version);
+  
+  if (mainWindow) {
+    mainWindow.webContents.send('app-update-downloaded', info.version);
+    
+    // Ask user to restart
+    dialog.showMessageBox(mainWindow, {
+      type: 'info',
+      title: 'Update Ready',
+      message: `Version ${info.version} has been downloaded. Restart the application to apply the update.`,
+      buttons: ['Restart Now', 'Later']
+    }).then((result) => {
+      if (result.response === 0) {
+        autoUpdater.quitAndInstall();
+      }
+    });
+  }
+});
+
+autoUpdater.on('error', (err) => {
+  console.error('App update error:', err);
+  if (mainWindow) {
+    mainWindow.webContents.send('app-update-error', err.message);
+  }
+});
+
+// Function to check for app updates
+function checkForAppUpdates() {
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Skipping auto-update check in development');
+    return;
+  }
+  
+  console.log('Checking for app updates...');
+  autoUpdater.checkForUpdatesAndNotify();
+}
+
 // ===== BOOTSTRAPPER & MOD DATA (Updated with exact descriptions from your website) =====
 const bootstrappers = [
   {
@@ -536,18 +626,6 @@ function startAutoUpdateChecks() {
   updateInterval = setInterval(checkAllBootstrappers, 10 * 60 * 1000);
 }
 
-// ===== APP AUTO-UPDATER =====
-function checkForAppUpdates() {
-  if (process.env.NODE_ENV === 'development') {
-    console.log('Skipping auto-update check in development');
-    return;
-  }
-  
-  autoUpdater.checkForUpdatesAndNotify().catch(err => {
-    console.error('Auto-update error:', err);
-  });
-}
-
 // ===== CREATE APPLICATION MENU =====
 function createMenu() {
   const template = [
@@ -566,7 +644,14 @@ function createMenu() {
         },
         { type: 'separator' },
         {
-          label: 'Check for Updates',
+          label: 'Check for App Updates',
+          click: () => {
+            checkForAppUpdates();
+          }
+        },
+        { type: 'separator' },
+        {
+          label: 'Check for Bootstrapper Updates',
           click: async () => {
             if (mainWindow) {
               mainWindow.webContents.send('checking-updates');
@@ -775,7 +860,13 @@ function createTray() {
       },
       { type: 'separator' },
       {
-        label: 'Check for Updates',
+        label: 'Check for App Updates',
+        click: () => {
+          checkForAppUpdates();
+        }
+      },
+      {
+        label: 'Check Bootstrapper Updates',
         click: async () => {
           if (mainWindow) {
             mainWindow.webContents.send('checking-updates');
@@ -831,7 +922,7 @@ function createTray() {
   }
 }
 
-// ===== IPC HANDLERS (Fixed) =====
+// ===== IPC HANDLERS =====
 ipcMain.on('get-bootstrappers', (event) => {
   event.returnValue = { bootstrappers, mods };
 });
@@ -885,7 +976,7 @@ ipcMain.on('check-updates', async (event) => {
   event.reply('update-check-completed');
 });
 
-// NEW: Add the missing IPC handler that preload.js calls
+// Discord notification handler
 ipcMain.on('send-discord-notification', async (event, title, oldVersion, newVersion, description, platform, image, isPrerelease) => {
   const success = await sendDiscordNotification(title, oldVersion, newVersion, description, platform, image, isPrerelease);
   event.reply('discord-notification-sent', success);
@@ -894,6 +985,44 @@ ipcMain.on('send-discord-notification', async (event, title, oldVersion, newVers
 // Handle bootstrapper-updated events from frontend
 ipcMain.on('bootstrapper-updated', (event, data) => {
   console.log('Bootstrapper updated from frontend:', data);
+});
+
+// ===== APP AUTO-UPDATE IPC HANDLERS =====
+ipcMain.on('check-app-update', () => {
+  checkForAppUpdates();
+});
+
+ipcMain.on('restart-and-update', () => {
+  autoUpdater.quitAndInstall();
+});
+
+ipcMain.on('get-app-version', (event) => {
+  event.returnValue = app.getVersion();
+});
+
+// App update event forwarders
+ipcMain.on('app-update-checking', (event) => {
+  event.reply('app-update-checking');
+});
+
+ipcMain.on('app-update-available', (event, version) => {
+  event.reply('app-update-available', version);
+});
+
+ipcMain.on('app-update-not-available', (event) => {
+  event.reply('app-update-not-available');
+});
+
+ipcMain.on('app-download-progress', (event, progress) => {
+  event.reply('app-download-progress', progress);
+});
+
+ipcMain.on('app-update-downloaded', (event, version) => {
+  event.reply('app-update-downloaded', version);
+});
+
+ipcMain.on('app-update-error', (event, error) => {
+  event.reply('app-update-error', error);
 });
 
 // ===== APP EVENT HANDLERS =====
