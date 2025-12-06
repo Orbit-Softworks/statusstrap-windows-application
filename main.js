@@ -2,12 +2,18 @@ const { app, BrowserWindow, Menu, Tray, nativeImage, ipcMain, shell, Notificatio
 const path = require('path');
 const fs = require('fs');
 const https = require('https');
+const { autoUpdater } = require('electron-updater');
+const log = require('electron-log');
 
 let mainWindow;
 let tray = null;
 let versionsCache = {};
 
-// ===== BOOTSTRAPPER & MOD DATA (Direct copy from your website) =====
+// Configure auto-updater logging
+autoUpdater.logger = log;
+autoUpdater.logger.transports.file.level = 'info';
+
+// ===== BOOTSTRAPPER & MOD DATA (Updated with exact descriptions from your website) =====
 const bootstrappers = [
   {
     title: "Fishstrap",
@@ -18,7 +24,8 @@ const bootstrappers = [
     image: "https://i.ibb.co/ymZnSCLj/fishstrap.png",
     tags: ["Fast Boot", "Dev-Grade Tools", "Profile Switching", "Recommended"],
     working: true,
-    type: "Bootstrapper"
+    type: "Bootstrapper",
+    description: "The developer's choice. Advanced FastFlag profiles, in-game logging (messages & players), auto-import from Bloxstrap, multi-instance support, and real-time session analytics. Built for power users and game testers."
   },
   {
     title: "Bloxstrap",
@@ -29,7 +36,8 @@ const bootstrappers = [
     image: "https://i.ibb.co/HT0SH7H1/bloxstrap.png",
     tags: ["Mods", "Themes", "Multi-Instance", "Stable"],
     working: true,
-    type: "Bootstrapper"
+    type: "Bootstrapper",
+    description: "The original moddable launcher. Custom fonts, old Roblox sounds, Discord Rich Presence, channel switching, and full theme support. Trusted by millions — the gold standard."
   },
   {
     title: "Froststrap",
@@ -40,7 +48,8 @@ const bootstrappers = [
     image: "https://i.ibb.co/fYzdV8vp/froststrap.png",
     tags: ["Ultra-Fast Boot", "Minimal Overhead", "Clean UI"],
     working: false,
-    type: "Bootstrapper"
+    type: "Bootstrapper",
+    description: "Cold performance, hot results. Stripped-down, optimized for speed with a frosty modern interface. Perfect for low-spec PCs and buttery-smooth launches."
   },
   {
     title: "Chevstrap",
@@ -51,7 +60,8 @@ const bootstrappers = [
     image: "https://i.ibb.co/4R2hkLzY/chevstrap.png",
     tags: ["Touch-First", "Android Optimized", "Alt Manager"],
     working: true,
-    type: "Bootstrapper"
+    type: "Bootstrapper",
+    description: "Made for mobile Roblox grinders. Full touch gestures, quick alt switching, battery saver mode, and vertical UI. Play hard, go far."
   },
   {
     title: "Appleblox",
@@ -62,7 +72,8 @@ const bootstrappers = [
     image: "https://i.ibb.co/C5RK7Wm7/appleblox.png",
     tags: ["Apple Silicon Native", "macOS Optimized", "Retina Ready"],
     working: true,
-    type: "Bootstrapper"
+    type: "Bootstrapper",
+    description: "Finally, a real Mac launcher. M1/M2/M3 native, full Retina support, smooth animations, and zero Wine. The Mac Roblox experience you've waited for."
   },
   {
     title: "Roothide",
@@ -73,7 +84,8 @@ const bootstrappers = [
     image: "https://i.ibb.co/fzfSzGz3/roothide.jpg",
     tags: ["iOS Native", "Touch Optimized", "No Jailbreak Needed"],
     working: true,
-    type: "Bootstrapper"
+    type: "Bootstrapper",
+    description: "Official Roblox feel — but faster. Native iOS launcher with touch precision, low-latency input, and sideload-ready. For iPad & iPhone pros."
   },
   {
     title: "Lution",
@@ -84,7 +96,8 @@ const bootstrappers = [
     image: "https://i.ibb.co/tTWKFgBk/lution.jpg",
     tags: ["Linux Native", "Wine-Free", "Open Source"],
     working: true,
-    type: "Bootstrapper"
+    type: "Bootstrapper",
+    description: "Roblox on Linux, done right. No Proton, no hacks — just native performance, Wine fallback option, and full desktop integration. Penguin approved."
   },
   {
     title: "Silverr",
@@ -95,7 +108,8 @@ const bootstrappers = [
     image: "https://i.ibb.co/Mx8vgfSt/Silverr.png",
     tags: ["Linux Native", "Wine-Free", "Open Source"],
     working: true,
-    type: "Bootstrapper"
+    type: "Bootstrapper",
+    description: "Roblox on Linux, done right. No Proton, no hacks — just native performance, Wine fallback option, and full desktop integration. Penguin approved."
   },
   {
     title: "OrangeBlox",
@@ -106,7 +120,8 @@ const bootstrappers = [
     image: "https://i.ibb.co/hxv3PCP6/AppIcon.png",
     tags: ["Fast Boot", "Mod Installation", "Multi-Instance", "Power User Pick"],
     working: true,
-    type: "Bootstrapper"
+    type: "Bootstrapper",
+    description: "The developer's choice. Custom FFlags and global settings, unlimited mods for avatars/icons/sounds, Discord webhooks for join/crash alerts, server location tracking, and Python event scripts. Built for power users and game testers."
   },
   {
     title: "Vinegar",
@@ -117,7 +132,8 @@ const bootstrappers = [
     image: "https://i.ibb.co/chmR76FC/vinegar.png",
     tags: ["Fast Boot", "Linux Optimized", "Configurable", "Studio Powerhouse"],
     working: true,
-    type: "Bootstrapper"
+    type: "Bootstrapper",
+    description: "The Linux dev's go-to. Seamless Wine integration for Roblox Studio, RCO FastFlag optimizations, quick auto-updates, and customizable prefixes for isolated environments. Ideal for cross-platform creators and tinkerers pushing boundaries on non-Windows setups."
   },
   {
     title: "DroidBlox",
@@ -128,7 +144,8 @@ const bootstrappers = [
     image: "https://i.ibb.co/xKMVg0hD/droidblox.png",
     tags: ["Android-Optimized Launch", "Activity Tracking", "RPC Integration", "Mobile Powerhouse"],
     working: true,
-    type: "Bootstrapper"
+    type: "Bootstrapper",
+    description: "The mobile dev's choice. Server location notifications, Rich Presence for Discord with join controls, seamless rejoin to last games, and upcoming intent launches plus FastFlag tweaks. Built for rooted Android users craving enhanced Roblox sessions with real-time awareness and social hooks."
   },
   {
     title: "BloxMac",
@@ -139,7 +156,8 @@ const bootstrappers = [
     image: "https://i.ibb.co/gMLj02Cj/bloxmac.png",
     tags: ["Mac-Native Launch", "Seamless Setup", "FastFlag Customization", "Power User Pick"],
     working: true,
-    type: "Bootstrapper"
+    type: "Bootstrapper",
+    description: "The Mac enthusiast's choice. Effortless DMG installation, full Bloxstrap integration with behavior tweaks, font mods, and logo customization, plus community-driven updates and ARM-optimized performance. Built for Apple users seeking a smooth, intuitive Roblox experience without the hassle."
   },
   {
     title: "Luczystrap",
@@ -150,7 +168,8 @@ const bootstrappers = [
     image: "https://i.ibb.co/gZyH0F5w/luczystrap.png",
     tags: ["Quick Launch", "Flag Mastery", "Mod Vault", "Secure Profiles"],
     working: false,
-    type: "Bootstrapper"
+    type: "Bootstrapper",
+    description: "Luczystrap empowers modders with total control: rapid Roblox startup, advanced FastFlag editor with search, toggles, and per-profile overrides, seamless theme and UI mod integration via safe folders, Discord Rich Presence with smart rules, portable offline design, and built-in tamper detection for ultimate privacy. Ideal for creators demanding a lightweight, extensible setup without trackers or bloat."
   }
 ];
 
@@ -162,10 +181,11 @@ const mods = [
     website: "https://x.synapse.to",
     discord: "https://discord.gg/synapsex",
     platform: "Windows",
-    image: "https://i.ibb.co/example/synapse.png",
+    image: "https://i.imgur.com/5y6Lx9K.png",
     tags: ["Script Executor", "Premium", "Powerful"],
     working: true,
-    type: "Mod"
+    type: "Mod",
+    description: "The most popular and powerful Roblox script executor. Features include full Lua support, script hub, and extensive compatibility."
   },
   {
     title: "Script-Ware",
@@ -173,10 +193,11 @@ const mods = [
     website: "https://script-ware.com",
     discord: "https://discord.gg/scriptware",
     platform: "Windows",
-    image: "https://i.ibb.co/example/scriptware.png",
+    image: "https://i.imgur.com/8z7WQ9T.png",
     tags: ["Script Executor", "Multi-Platform", "Modern"],
     working: true,
-    type: "Mod"
+    type: "Mod",
+    description: "Modern script executor with cross-platform support, built-in script hub, and regular updates."
   }
 ];
 
@@ -205,7 +226,7 @@ function saveVersions(versions) {
 
 async function fetchGitHubRelease(repo) {
   return new Promise((resolve, reject) => {
-    if (!repo) {
+    if (!repo || repo.trim() === '') {
       resolve({
         version: "Manual",
         lastUpdated: "Manual Update",
@@ -290,7 +311,13 @@ function extractVersion(text) {
 
 async function sendDiscordNotification(launcher, oldVersion, newVersion, description, platform, image, isPrerelease = false) {
   try {
-    const webhookUrl = "YOUR_DISCORD_WEBHOOK_HERE"; // Add your webhook URL
+    // Replace with your actual Discord webhook URL
+    const webhookUrl = process.env.DISCORD_WEBHOOK || "";
+    
+    if (!webhookUrl) {
+      console.log('No Discord webhook configured');
+      return false;
+    }
     
     const platformConfig = {
       "Windows": { emoji: "🪟", color: 15158332 },
@@ -352,7 +379,7 @@ function showDesktopNotification(title, body, icon = null) {
     const notification = new Notification({
       title,
       body,
-      icon: icon || path.join(__dirname, 'assets', 'icon.png'),
+      icon: icon || path.join(__dirname, 'icon.png'),
       silent: false
     });
     
@@ -372,7 +399,7 @@ function showDesktopNotification(title, body, icon = null) {
 
 // ===== CREATE MAIN WINDOW =====
 function createWindow() {
-  const iconPath = path.join(__dirname, 'assets', 'icon.png');
+  const iconPath = path.join(__dirname, 'icon.png');
   
   mainWindow = new BrowserWindow({
     width: 1400,
@@ -402,8 +429,11 @@ function createWindow() {
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
     
-    // Start auto-update checks
+    // Start auto-update checks for bootstrappers
     startAutoUpdateChecks();
+    
+    // Check for app updates
+    checkForAppUpdates();
     
     // DevTools for development
     if (process.env.NODE_ENV === 'development') {
@@ -427,7 +457,7 @@ function createWindow() {
   createTray();
 }
 
-// ===== AUTO-UPDATE CHECKER =====
+// ===== AUTO-UPDATE CHECKER FOR BOOTSTRAPPERS =====
 let updateInterval;
 
 async function checkAllBootstrappers() {
@@ -454,7 +484,7 @@ async function checkAllBootstrappers() {
               storedVersions[bootstrapper.title] = newVersion;
               saveVersions(storedVersions);
               
-              // Send notifications
+              // Send desktop notification
               showDesktopNotification(
                 `${bootstrapper.title} Update Available!`,
                 `Updated from ${oldVersion} to ${newVersion}`,
@@ -504,6 +534,18 @@ function startAutoUpdateChecks() {
   
   // Check every 10 minutes
   updateInterval = setInterval(checkAllBootstrappers, 10 * 60 * 1000);
+}
+
+// ===== APP AUTO-UPDATER =====
+function checkForAppUpdates() {
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Skipping auto-update check in development');
+    return;
+  }
+  
+  autoUpdater.checkForUpdatesAndNotify().catch(err => {
+    console.error('Auto-update error:', err);
+  });
 }
 
 // ===== CREATE APPLICATION MENU =====
@@ -589,8 +631,7 @@ function createMenu() {
           click: () => {
             if (mainWindow) {
               mainWindow.webContents.executeJavaScript(`
-                window.location.hash = '';
-                document.querySelector('.overflow-y-auto').scrollTo({ top: 0, behavior: 'smooth' });
+                scrollToSection('home');
               `);
             }
           }
@@ -697,14 +738,14 @@ function createMenu() {
         {
           label: 'GitHub',
           click: () => {
-            shell.openExternal('https://github.com/Orbit-Softworks/statusstrap-app');
+            shell.openExternal('https://github.com/Orbit-Softworks/statusstrap-windows-application');
           }
         },
         { type: 'separator' },
         {
           label: 'Report Issue',
           click: () => {
-            shell.openExternal('https://github.com/Orbit-Softworks/statusstrap-app/issues');
+            shell.openExternal('https://github.com/Orbit-Softworks/statusstrap-windows-application/issues');
           }
         }
       ]
@@ -717,76 +758,80 @@ function createMenu() {
 
 // ===== CREATE SYSTEM TRAY =====
 function createTray() {
-  const iconPath = path.join(__dirname, 'assets', 'tray-icon.png');
+  const iconPath = path.join(__dirname, 'icon.png');
   
-  tray = new Tray(iconPath || nativeImage.createEmpty());
-  
-  const contextMenu = Menu.buildFromTemplate([
-    {
-      label: 'Show StatusStrap',
-      click: () => {
-        if (mainWindow) {
-          mainWindow.show();
-          mainWindow.focus();
-        }
-      }
-    },
-    { type: 'separator' },
-    {
-      label: 'Check for Updates',
-      click: async () => {
-        if (mainWindow) {
-          mainWindow.webContents.send('checking-updates');
-          await checkAllBootstrappers();
-          mainWindow.webContents.send('updates-checked');
-        }
-      }
-    },
-    { type: 'separator' },
-    {
-      label: 'Bootstrappers',
-      submenu: bootstrappers.slice(0, 5).map(b => ({
-        label: b.title,
-        enabled: b.working,
+  try {
+    tray = new Tray(iconPath || nativeImage.createEmpty());
+    
+    const contextMenu = Menu.buildFromTemplate([
+      {
+        label: 'Show StatusStrap',
         click: () => {
           if (mainWindow) {
             mainWindow.show();
             mainWindow.focus();
-            mainWindow.webContents.executeJavaScript(`
-              openBootstrapper('${b.title}');
-            `);
           }
         }
-      }))
-    },
-    { type: 'separator' },
-    {
-      label: 'Quit',
-      click: () => {
-        app.quit();
-      }
-    }
-  ]);
-
-  tray.setToolTip('StatusStrap - Roblox Launcher Tracker');
-  tray.setContextMenu(contextMenu);
-
-  tray.on('click', () => {
-    if (mainWindow) {
-      if (mainWindow.isVisible()) {
-        if (mainWindow.isMinimized()) {
-          mainWindow.restore();
+      },
+      { type: 'separator' },
+      {
+        label: 'Check for Updates',
+        click: async () => {
+          if (mainWindow) {
+            mainWindow.webContents.send('checking-updates');
+            await checkAllBootstrappers();
+            mainWindow.webContents.send('updates-checked');
+          }
         }
-        mainWindow.focus();
-      } else {
-        mainWindow.show();
-        mainWindow.focus();
+      },
+      { type: 'separator' },
+      {
+        label: 'Bootstrappers',
+        submenu: bootstrappers.slice(0, 5).map(b => ({
+          label: b.title,
+          enabled: b.working,
+          click: () => {
+            if (mainWindow) {
+              mainWindow.show();
+              mainWindow.focus();
+              mainWindow.webContents.executeJavaScript(`
+                openBootstrapper('${b.title}');
+              `);
+            }
+          }
+        }))
+      },
+      { type: 'separator' },
+      {
+        label: 'Quit',
+        click: () => {
+          app.quit();
+        }
       }
-    }
-  });
+    ]);
+
+    tray.setToolTip('StatusStrap - Roblox Launcher Tracker');
+    tray.setContextMenu(contextMenu);
+
+    tray.on('click', () => {
+      if (mainWindow) {
+        if (mainWindow.isVisible()) {
+          if (mainWindow.isMinimized()) {
+            mainWindow.restore();
+          }
+          mainWindow.focus();
+        } else {
+          mainWindow.show();
+          mainWindow.focus();
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Failed to create tray:', error);
+  }
 }
 
-// ===== IPC HANDLERS =====
+// ===== IPC HANDLERS (Fixed) =====
 ipcMain.on('get-bootstrappers', (event) => {
   event.returnValue = { bootstrappers, mods };
 });
@@ -840,6 +885,17 @@ ipcMain.on('check-updates', async (event) => {
   event.reply('update-check-completed');
 });
 
+// NEW: Add the missing IPC handler that preload.js calls
+ipcMain.on('send-discord-notification', async (event, title, oldVersion, newVersion, description, platform, image, isPrerelease) => {
+  const success = await sendDiscordNotification(title, oldVersion, newVersion, description, platform, image, isPrerelease);
+  event.reply('discord-notification-sent', success);
+});
+
+// Handle bootstrapper-updated events from frontend
+ipcMain.on('bootstrapper-updated', (event, data) => {
+  console.log('Bootstrapper updated from frontend:', data);
+});
+
 // ===== APP EVENT HANDLERS =====
 app.whenReady().then(() => {
   // Set app name
@@ -883,3 +939,8 @@ if (!gotTheLock) {
     }
   });
 }
+
+// IPC handler for splash screen
+ipcMain.on('get-version', (event) => {
+  event.returnValue = app.getVersion();
+});
