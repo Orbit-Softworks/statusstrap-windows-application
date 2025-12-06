@@ -1,10 +1,9 @@
-name: Build and Upload to Release
+name: Build and Release
 on: 
-  release:
-    types: [published]
-
-permissions:
-  contents: write
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
 
 jobs:
   build:
@@ -22,24 +21,14 @@ jobs:
     - name: Install dependencies
       run: npm install
       
-    - name: Get version from tag
+    - name: Get current version
       id: get_version
       run: |
-        $tag = "${{ github.event.release.tag_name }}"
-        $version = $tag -replace '^v', ''
+        $version = node -p "require('./package.json').version"
         echo "version=$version" >> $env:GITHUB_OUTPUT
         echo "Building version: $version"
       
-    - name: Build application
-      run: npx electron-builder --win --publish never
-      
-    - name: Upload files to release
-      uses: softprops/action-gh-release@v1
-      with:
-        tag_name: ${{ github.event.release.tag_name }}
-        files: |
-          dist/*.exe
-          dist/*.blockmap
-          dist/latest.yml
+    - name: Build and Publish
+      run: npx electron-builder --win --publish always
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ secrets.GH_TOKEN }}
