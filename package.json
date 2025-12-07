@@ -6,7 +6,7 @@
   "main": "main.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Orbit-Softworks/statusstrap-windows-application.git"
+    "url": "https://github.com/Orbit-Softworks/statusstrap-app.git"
   },
   "scripts": {
     "start": "electron .",
@@ -35,7 +35,7 @@
     "publish": {
       "provider": "github",
       "owner": "Orbit-Softworks",
-      "repo": "statusstrap-windows-application"
+      "repo": "statusstrap-app"
     }
   }
 }
