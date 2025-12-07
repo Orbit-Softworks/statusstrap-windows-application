@@ -169,7 +169,7 @@ async function createMainWindow() {
   mainWindow.webContents.on('will-navigate', (event, url) => {
     console.log('Navigation attempt to:', url);
     // Prevent navigation away from your domain (optional)
-    if (!url.includes('statusstrap.live')) {
+    if (!url.includes('eiuyrqweptwoeihfdsjkcbnaadjxblfskjdhvndsbflav.vercel.app')) {
       event.preventDefault();
       console.log('Blocked navigation to external URL');
     }
@@ -178,14 +178,14 @@ async function createMainWindow() {
   // 6. Block any attempts to open new windows
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     // Only allow URLs from your domain
-    if (url.includes('statusstrap.live') || url.includes('github.com')) {
+    if (url.includes('eiuyrqweptwoeihfdsjkcbnaadjxblfskjdhvndsbflav.vercel.app') || url.includes('github.com')) {
       return { action: 'allow' };
     }
     return { action: 'deny' };
   });
   // =================================
   
-  mainWindow.loadURL('https://statusstrap.live');
+  mainWindow.loadURL('https://eiuyrqweptwoeihfdsjkcbnaadjxblfskjdhvndsbflav.vercel.app');
   
   // Fetch release date in the background
   getReleaseDate(version).then(releaseDate => {
