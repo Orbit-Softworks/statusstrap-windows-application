@@ -97,50 +97,91 @@ async function createMainWindow() {
     }
   });
   
-  // ===== AUTHENTICATION SETUP =====
+  // ===== ENHANCED AUTHENTICATION SETUP =====
   // 1. Set custom User Agent for your app
   mainWindow.webContents.setUserAgent(`StatusStrap-App/${APP_CONFIG.APP_VERSION} Electron/${process.versions.electron}`);
   
-  // 2. Inject authentication token after website loads
-  mainWindow.webContents.on('did-finish-load', () => {
-    // Wait a bit to ensure website JavaScript is loaded
-    setTimeout(() => {
-      mainWindow.webContents.executeJavaScript(`
-        // Set app authentication flags
-        window.__STATUSSTRAP_APP = true;
-        window.__APP_TOKEN = '${APP_CONFIG.APP_TOKEN}';
-        window.__APP_VERSION = '${APP_CONFIG.APP_VERSION}';
-        window.__ELECTRON = true;
-        window.__ELECTRON_VERSION = '${process.versions.electron}';
-        
-        console.log('[StatusStrap Desktop App] Authentication injected');
-        console.log('[StatusStrap Desktop App] Version: ${APP_CONFIG.APP_VERSION}');
-        
-        // Dispatch an event that your website can listen for
-        window.dispatchEvent(new CustomEvent('statusstrap-app-authenticated', {
-          detail: {
-            token: '${APP_CONFIG.APP_TOKEN}',
-            version: '${APP_CONFIG.APP_VERSION}'
-          }
-        }));
-      `).catch(err => console.error('Failed to inject auth:', err));
-    }, 1000);
+  // 2. Inject authentication token IMMEDIATELY when page loads
+  mainWindow.webContents.on('did-start-loading', () => {
+    // Inject immediately, don't wait for did-finish-load
+    mainWindow.webContents.executeJavaScript(`
+      // Clear any previous auth flags
+      delete window.__STATUSSTRAP_APP;
+      delete window.__APP_TOKEN;
+      delete window.__STATUSSTRAP_AUTH_EVENT;
+      
+      // Set app authentication flags IMMEDIATELY
+      window.__STATUSSTRAP_APP = true;
+      window.__APP_TOKEN = '${APP_CONFIG.APP_TOKEN}';
+      window.__APP_VERSION = '${APP_CONFIG.APP_VERSION}';
+      window.__ELECTRON = true;
+      window.__ELECTRON_VERSION = '${process.versions.electron}';
+      
+      console.log('[StatusStrap Desktop App] Authentication injected IMMEDIATELY');
+      console.log('[StatusStrap Desktop App] Version: ${APP_CONFIG.APP_VERSION}');
+      console.log('[StatusStrap Desktop App] Token injected: '${APP_CONFIG.APP_TOKEN.substring(0, 8)}...');
+    `).catch(err => console.error('Failed to inject immediate auth:', err));
   });
   
-  // 3. Add custom headers to all requests (optional but recommended)
+  // 3. Reinforce authentication after page loads
+  mainWindow.webContents.on('did-finish-load', () => {
+    // Reinforce authentication with event dispatch
+    mainWindow.webContents.executeJavaScript(`
+      // Re-set app authentication flags (in case page overwrote them)
+      window.__STATUSSTRAP_APP = true;
+      window.__APP_TOKEN = '${APP_CONFIG.APP_TOKEN}';
+      window.__STATUSSTRAP_AUTH_EVENT = true;
+      
+      // Dispatch authentication event for React to listen to
+      window.dispatchEvent(new CustomEvent('statusstrap-app-authenticated', {
+        detail: {
+          token: '${APP_CONFIG.APP_TOKEN}',
+          version: '${APP_CONFIG.APP_VERSION}',
+          timestamp: new Date().toISOString()
+        }
+      }));
+      
+      console.log('[StatusStrap Desktop App] Authentication reinforced with event');
+      console.log('[StatusStrap Desktop App] Event dispatched to React');
+      
+      // Add debug info to window for easy debugging
+      window.__ELECTRON_DEBUG = {
+        authenticated: true,
+        version: '${APP_CONFIG.APP_VERSION}',
+        userAgent: navigator.userAgent,
+        electronVersion: '${process.versions.electron}'
+      };
+    `).catch(err => console.error('Failed to reinforce auth:', err));
+  });
+  
+  // 4. Add custom headers to all requests
   mainWindow.webContents.session.webRequest.onBeforeSendHeaders(
     (details, callback) => {
       details.requestHeaders['X-StatusStrap-App'] = APP_CONFIG.APP_VERSION;
       details.requestHeaders['X-StatusStrap-Token'] = APP_CONFIG.APP_TOKEN;
       details.requestHeaders['X-Client-Source'] = 'electron-desktop-app';
+      details.requestHeaders['User-Agent'] = `StatusStrap-App/${APP_CONFIG.APP_VERSION} Electron/${process.versions.electron}`;
       callback({ requestHeaders: details.requestHeaders });
     }
   );
   
-  // 4. Listen for when the main window is about to navigate
+  // 5. Listen for when the main window is about to navigate
   mainWindow.webContents.on('will-navigate', (event, url) => {
     console.log('Navigation attempt to:', url);
-    // You could add additional security checks here
+    // Prevent navigation away from your domain (optional)
+    if (!url.includes('statusstrap.live')) {
+      event.preventDefault();
+      console.log('Blocked navigation to external URL');
+    }
+  });
+  
+  // 6. Block any attempts to open new windows
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    // Only allow URLs from your domain
+    if (url.includes('statusstrap.live') || url.includes('github.com')) {
+      return { action: 'allow' };
+    }
+    return { action: 'deny' };
   });
   // =================================
   
@@ -427,7 +468,7 @@ global.forceUpdateCheck = () => {
   checkForUpdates();
 };
 
-// ===== AUTHENTICATION DEBUGGING =====
+// ===== ENHANCED AUTHENTICATION DEBUGGING =====
 // Add a way to manually trigger auth injection (for testing)
 global.injectAuth = () => {
   if (mainWindow && !mainWindow.isDestroyed()) {
@@ -435,7 +476,17 @@ global.injectAuth = () => {
       console.log('[DEBUG] Manually injecting auth...');
       window.__STATUSSTRAP_APP = true;
       window.__APP_TOKEN = '${APP_CONFIG.APP_TOKEN}';
-      console.log('[DEBUG] Auth injected:', window.__STATUSSTRAP_APP);
+      window.__STATUSSTRAP_AUTH_EVENT = true;
+      
+      // Dispatch authentication event
+      window.dispatchEvent(new CustomEvent('statusstrap-app-authenticated', {
+        detail: {
+          token: '${APP_CONFIG.APP_TOKEN}',
+          version: '${APP_CONFIG.APP_VERSION}'
+        }
+      }));
+      
+      console.log('[DEBUG] Auth injected and event dispatched');
     `);
   } else {
     console.log('Main window not available');
@@ -449,15 +500,58 @@ global.checkAuthStatus = () => {
       console.log('[DEBUG] Auth Status:');
       console.log('  __STATUSSTRAP_APP:', window.__STATUSSTRAP_APP);
       console.log('  __APP_TOKEN:', window.__APP_TOKEN ? '***' + window.__APP_TOKEN.slice(-4) : 'Not set');
+      console.log('  __STATUSSTRAP_AUTH_EVENT:', window.__STATUSSTRAP_AUTH_EVENT);
       console.log('  User Agent:', navigator.userAgent);
       
       return {
         hasApp: !!window.__STATUSSTRAP_APP,
         hasToken: !!window.__APP_TOKEN,
-        userAgent: navigator.userAgent
+        hasAuthEvent: !!window.__STATUSSTRAP_AUTH_EVENT,
+        userAgent: navigator.userAgent,
+        tokenMatchesExpected: window.__APP_TOKEN === '${APP_CONFIG.APP_TOKEN}'
       };
     `).then(result => {
       console.log('Auth check result:', result);
     });
+  }
+};
+
+// Simulate website authentication (for testing)
+global.simulateWebsite = () => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.executeJavaScript(`
+      console.log('[DEBUG] Simulating website (no auth)...');
+      delete window.__STATUSSTRAP_APP;
+      delete window.__APP_TOKEN;
+      delete window.__STATUSSTRAP_AUTH_EVENT;
+      delete window.__ELECTRON;
+      delete window.__ELECTRON_VERSION;
+      
+      console.log('[DEBUG] All auth flags removed (simulating website)');
+      console.log('[DEBUG] Reloading page to trigger auth check...');
+      window.location.reload();
+    `);
+  }
+};
+
+// Force re-authentication
+global.reauthenticate = () => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.executeJavaScript(`
+      console.log('[DEBUG] Forcing re-authentication...');
+      window.__STATUSSTRAP_APP = true;
+      window.__APP_TOKEN = '${APP_CONFIG.APP_TOKEN}';
+      window.__STATUSSTRAP_AUTH_EVENT = true;
+      
+      window.dispatchEvent(new CustomEvent('statusstrap-app-authenticated', {
+        detail: {
+          token: '${APP_CONFIG.APP_TOKEN}',
+          version: '${APP_CONFIG.APP_VERSION}',
+          forced: true
+        }
+      }));
+      
+      console.log('[DEBUG] Re-authentication complete');
+    `);
   }
 };
