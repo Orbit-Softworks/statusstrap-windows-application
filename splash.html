@@ -120,7 +120,6 @@
       to { transform: rotate(360deg); }
     }
 
-    /* Transition state - slower fade out */
     body.finishing {
       animation: fadeOutShrink 1.2s ease-in-out forwards;
     }
@@ -147,11 +146,9 @@
   <script>
     const { ipcRenderer } = require('electron');
     
-    // Get version
     const version = ipcRenderer.sendSync('get-version');
     document.getElementById('version').textContent = `v${version}`;
     
-    // Update status with slower transition
     ipcRenderer.on('status', (event, message) => {
       const statusEl = document.getElementById('status');
       statusEl.style.opacity = '0';
@@ -162,16 +159,14 @@
         statusEl.style.opacity = '1';
         statusEl.style.transform = 'translateY(0)';
         
-        // If starting app, trigger smooth transition after showing message for longer
         if (message.toLowerCase().includes('starting app')) {
           setTimeout(() => {
             document.body.classList.add('finishing');
-          }, 1500); // Show "Starting app..." for 1.5 seconds before fading
+          }, 1500);
         }
       }, 300);
     });
     
-    // Update progress
     ipcRenderer.on('progress', (event, percent) => {
       document.getElementById('progress').style.width = percent + '%';
     });
