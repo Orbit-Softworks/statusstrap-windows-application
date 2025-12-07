@@ -6,10 +6,13 @@ const https = require('https');
 let splashWindow;
 let mainWindow;
 
-// Configure logging
-log.transports.file.level = 'debug';
-log.transports.console.level = 'debug';
-autoUpdater.logger = log;
+// ===== AUTHENTICATION CONFIG =====
+const APP_CONFIG = {
+  // Set this token in your build process or environment
+  APP_TOKEN: process.env.APP_TOKEN || 'STATUSSTRAP_APP_SECRET_2024_V1',
+  APP_VERSION: app.getVersion() || '1.0.2'
+};
+// =================================
 
 function createSplash() {
   splashWindow = new BrowserWindow({
@@ -86,8 +89,60 @@ async function createMainWindow() {
     show: false,
     title: `StatusStrap | v${version} | Loading...`,
     roundedCorners: true,
-    backgroundColor: '#000000'
+    backgroundColor: '#000000',
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      // Optional: Add a preload script if needed for additional security
+    }
   });
+  
+  // ===== AUTHENTICATION SETUP =====
+  // 1. Set custom User Agent for your app
+  mainWindow.webContents.setUserAgent(`StatusStrap-App/${APP_CONFIG.APP_VERSION} Electron/${process.versions.electron}`);
+  
+  // 2. Inject authentication token after website loads
+  mainWindow.webContents.on('did-finish-load', () => {
+    // Wait a bit to ensure website JavaScript is loaded
+    setTimeout(() => {
+      mainWindow.webContents.executeJavaScript(`
+        // Set app authentication flags
+        window.__STATUSSTRAP_APP = true;
+        window.__APP_TOKEN = '${APP_CONFIG.APP_TOKEN}';
+        window.__APP_VERSION = '${APP_CONFIG.APP_VERSION}';
+        window.__ELECTRON = true;
+        window.__ELECTRON_VERSION = '${process.versions.electron}';
+        
+        console.log('[StatusStrap Desktop App] Authentication injected');
+        console.log('[StatusStrap Desktop App] Version: ${APP_CONFIG.APP_VERSION}');
+        
+        // Dispatch an event that your website can listen for
+        window.dispatchEvent(new CustomEvent('statusstrap-app-authenticated', {
+          detail: {
+            token: '${APP_CONFIG.APP_TOKEN}',
+            version: '${APP_CONFIG.APP_VERSION}'
+          }
+        }));
+      `).catch(err => console.error('Failed to inject auth:', err));
+    }, 1000);
+  });
+  
+  // 3. Add custom headers to all requests (optional but recommended)
+  mainWindow.webContents.session.webRequest.onBeforeSendHeaders(
+    (details, callback) => {
+      details.requestHeaders['X-StatusStrap-App'] = APP_CONFIG.APP_VERSION;
+      details.requestHeaders['X-StatusStrap-Token'] = APP_CONFIG.APP_TOKEN;
+      details.requestHeaders['X-Client-Source'] = 'electron-desktop-app';
+      callback({ requestHeaders: details.requestHeaders });
+    }
+  );
+  
+  // 4. Listen for when the main window is about to navigate
+  mainWindow.webContents.on('will-navigate', (event, url) => {
+    console.log('Navigation attempt to:', url);
+    // You could add additional security checks here
+  });
+  // =================================
   
   mainWindow.loadURL('https://statusstrap.live');
   
@@ -339,6 +394,7 @@ function checkForUpdates() {
 
 app.on('ready', () => {
   console.log(`StatusStrap v${app.getVersion()} starting...`);
+  console.log(`App Token: ${APP_CONFIG.APP_TOKEN}`);
   createSplash();
   
   // Wait for splash to render, then check for updates
@@ -369,4 +425,39 @@ global.debugUpdate = () => {
 global.forceUpdateCheck = () => {
   console.log('=== FORCE UPDATE CHECK ===');
   checkForUpdates();
+};
+
+// ===== AUTHENTICATION DEBUGGING =====
+// Add a way to manually trigger auth injection (for testing)
+global.injectAuth = () => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.executeJavaScript(`
+      console.log('[DEBUG] Manually injecting auth...');
+      window.__STATUSSTRAP_APP = true;
+      window.__APP_TOKEN = '${APP_CONFIG.APP_TOKEN}';
+      console.log('[DEBUG] Auth injected:', window.__STATUSSTRAP_APP);
+    `);
+  } else {
+    console.log('Main window not available');
+  }
+};
+
+// Check authentication status
+global.checkAuthStatus = () => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.executeJavaScript(`
+      console.log('[DEBUG] Auth Status:');
+      console.log('  __STATUSSTRAP_APP:', window.__STATUSSTRAP_APP);
+      console.log('  __APP_TOKEN:', window.__APP_TOKEN ? '***' + window.__APP_TOKEN.slice(-4) : 'Not set');
+      console.log('  User Agent:', navigator.userAgent);
+      
+      return {
+        hasApp: !!window.__STATUSSTRAP_APP,
+        hasToken: !!window.__APP_TOKEN,
+        userAgent: navigator.userAgent
+      };
+    `).then(result => {
+      console.log('Auth check result:', result);
+    });
+  }
 };
