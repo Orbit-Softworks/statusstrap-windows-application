@@ -32,20 +32,24 @@ async function getReleaseDate(version) {
   return new Promise((resolve) => {
     const options = {
       hostname: 'api.github.com',
-      path: `/repos/Orbit-Softworks/statusstrap-app/releases/tags/v${version}`,
+      path: `/repos/Orbit-Softworks/statusstrap-windows-application/releases/tags/v${version}`,
       method: 'GET',
       headers: {
-        'User-Agent': 'StatusStrap-App'
+        'User-Agent': 'StatusStrap-App',
+        'Accept': 'application/vnd.github.v3+json'
       }
     };
 
     const req = https.request(options, (res) => {
+      if (res.statusCode !== 200) {
+        console.log(`GitHub API returned ${res.statusCode}`);
+        req.destroy();
+        resolve(null);
+        return;
+      }
+      
       let data = '';
-      
-      res.on('data', (chunk) => {
-        data += chunk;
-      });
-      
+      res.on('data', (chunk) => data += chunk);
       res.on('end', () => {
         try {
           const release = JSON.parse(data);
@@ -64,11 +68,12 @@ async function getReleaseDate(version) {
     });
 
     req.on('error', (err) => {
-      console.error('Failed to fetch release date:', err);
+      console.error('Failed to fetch release date:', err.message);
       resolve(null);
     });
 
-    req.setTimeout(5000, () => {
+    req.setTimeout(3000, () => {
+      console.log('Release date fetch timeout');
       req.destroy();
       resolve(null);
     });
@@ -107,7 +112,9 @@ async function createMainWindow() {
   });
   
   mainWindow.once('ready-to-show', () => {
-    if (splashWindow) splashWindow.close();
+    if (splashWindow && !splashWindow.isDestroyed()) {
+      splashWindow.close();
+    }
     mainWindow.show();
   });
 
@@ -129,7 +136,14 @@ function setupAutoUpdater() {
   console.log('Current version:', app.getVersion());
   console.log('Feed provider: github');
   console.log('Owner: Orbit-Softworks');
-  console.log('Repo: statusstrap-app');
+  console.log('Repo: statusstrap-windows-application');
+  
+  // Configure GitHub repository for updates
+  autoUpdater.setFeedURL({
+    provider: 'github',
+    owner: 'Orbit-Softworks',
+    repo: 'statusstrap-windows-application'
+  });
   
   autoUpdater.autoDownload = true;
   autoUpdater.autoInstallOnAppQuit = true;
@@ -139,7 +153,7 @@ function setupAutoUpdater() {
   
   autoUpdater.on('checking-for-update', () => {
     console.log('Checking for updates...');
-    if (splashWindow) {
+    if (splashWindow && !splashWindow.isDestroyed()) {
       splashWindow.webContents.send('status', 'Checking for updates...');
     }
   });
@@ -149,7 +163,7 @@ function setupAutoUpdater() {
     console.log('Version:', info.version);
     console.log('Release date:', info.releaseDate);
     
-    if (splashWindow) {
+    if (splashWindow && !splashWindow.isDestroyed()) {
       splashWindow.webContents.send('status', `Update ${info.version} available!`);
       splashWindow.webContents.send('progress', 0);
     }
@@ -157,7 +171,7 @@ function setupAutoUpdater() {
   
   autoUpdater.on('update-not-available', (info) => {
     console.log('No updates available');
-    if (splashWindow) {
+    if (splashWindow && !splashWindow.isDestroyed()) {
       splashWindow.webContents.send('status', 'You have the latest version');
       setTimeout(() => {
         splashWindow.webContents.send('status', 'Starting app...');
@@ -172,7 +186,7 @@ function setupAutoUpdater() {
     const percent = Math.floor(progress.percent);
     console.log(`Download progress: ${percent}%`);
     
-    if (splashWindow) {
+    if (splashWindow && !splashWindow.isDestroyed()) {
       splashWindow.webContents.send('progress', percent);
       splashWindow.webContents.send('status', `Downloading... ${percent}%`);
     }
@@ -182,7 +196,7 @@ function setupAutoUpdater() {
     console.log('=== UPDATE DOWNLOADED ===');
     console.log('Version ready to install:', info.version);
     
-    if (splashWindow) {
+    if (splashWindow && !splashWindow.isDestroyed()) {
       splashWindow.webContents.send('progress', 100);
       splashWindow.webContents.send('status', 'Update downloaded!');
       
@@ -202,8 +216,9 @@ function setupAutoUpdater() {
   autoUpdater.on('error', (err) => {
     console.error('=== AUTO-UPDATE ERROR ===');
     console.error('Error message:', err.message);
+    console.error('Error stack:', err.stack);
     
-    if (splashWindow) {
+    if (splashWindow && !splashWindow.isDestroyed()) {
       splashWindow.webContents.send('status', 'Update failed, starting app...');
       setTimeout(() => createMainWindow(), 1500);
     } else {
@@ -214,50 +229,60 @@ function setupAutoUpdater() {
   return true;
 }
 
-function checkForUpdates() {
+async function checkForUpdates() {
+  // DEBUG: Uncomment the next 2 lines to skip update checks temporarily
+  // console.log('DEBUG: Skipping update check');
+  // setTimeout(() => createMainWindow(), 1000);
+  // return;
+
   if (!setupAutoUpdater()) {
-    setTimeout(() => createMainWindow(), 2000);
+    console.log('Dev mode: Starting app without update check');
+    setTimeout(() => createMainWindow(), 1000);
     return;
   }
   
   console.log('Starting update check...');
   
+  // Set a timeout for the entire update check process
   const updateTimeout = setTimeout(() => {
     console.log('Update check timeout, starting app...');
-    if (splashWindow) {
+    if (splashWindow && !splashWindow.isDestroyed()) {
       splashWindow.webContents.send('status', 'Starting app...');
-      setTimeout(() => createMainWindow(), 1000);
+      setTimeout(() => createMainWindow(), 500);
     }
-  }, 15000);
+  }, 8000); // Reduced from 15s to 8s
   
-  autoUpdater.checkForUpdates().then(result => {
+  try {
+    const result = await autoUpdater.checkForUpdates();
     clearTimeout(updateTimeout);
-    console.log('Update check result:', result);
+    console.log('Update check completed:', result);
     
+    // If no update or error in result, proceed
     if (!result || !result.updateInfo) {
-      console.log('No update found or already up to date');
-      if (splashWindow) {
+      console.log('No updates available');
+      if (splashWindow && !splashWindow.isDestroyed()) {
         splashWindow.webContents.send('status', 'Starting app...');
-        setTimeout(() => createMainWindow(), 1000);
+        setTimeout(() => createMainWindow(), 500);
       }
     }
-  }).catch(err => {
+  } catch (err) {
     clearTimeout(updateTimeout);
     console.error('Update check failed:', err);
-    if (splashWindow) {
+    if (splashWindow && !splashWindow.isDestroyed()) {
       splashWindow.webContents.send('status', 'Starting app...');
-      setTimeout(() => createMainWindow(), 1000);
+      setTimeout(() => createMainWindow(), 500);
     }
-  });
+  }
 }
 
 app.on('ready', () => {
   console.log(`StatusStrap v${app.getVersion()} starting...`);
   createSplash();
   
+  // Give splash screen time to render before starting update check
   setTimeout(() => {
     checkForUpdates();
-  }, 1000);
+  }, 500);
 });
 
 app.on('window-all-closed', () => {
@@ -266,4 +291,14 @@ app.on('window-all-closed', () => {
 
 ipcMain.on('get-version', (event) => {
   event.returnValue = app.getVersion();
+});
+
+// Add this for better error handling
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  // Try to start the main window even if there's an error
+  if (!mainWindow && splashWindow && !splashWindow.isDestroyed()) {
+    splashWindow.webContents.send('status', 'Error occurred, starting app...');
+    setTimeout(() => createMainWindow(), 1000);
+  }
 });
