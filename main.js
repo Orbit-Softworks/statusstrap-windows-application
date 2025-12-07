@@ -31,7 +31,7 @@ async function getReleaseDate(version) {
   return new Promise((resolve) => {
     const options = {
       hostname: 'api.github.com',
-      path: `/repos/Orbit-Softworks/statusstrap-app/releases/tags/v${version}`,
+      path: `/repos/Orbit-Softworks/statusstrap-windows-application/releases/tags/v${version}`,
       method: 'GET',
       headers: {
         'User-Agent': 'StatusStrap-App'
@@ -186,7 +186,7 @@ function setupAutoUpdater() {
   console.log('Current version:', app.getVersion());
   console.log('Feed provider: github');
   console.log('Owner: Orbit-Softworks');
-  console.log('Repo: statusstrap-app');
+  console.log('Repo: statusstrap-windows-application');
   
   // CRITICAL: Configure auto-updater
   autoUpdater.autoDownload = true; // Must be true!
