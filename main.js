@@ -6,13 +6,10 @@ const https = require('https');
 let splashWindow;
 let mainWindow;
 
-// ===== AUTHENTICATION CONFIG =====
 const APP_CONFIG = {
-  // Set this token in your build process or environment
   APP_TOKEN: process.env.APP_TOKEN || 'STATUSSTRAP_APP_SECRET_2024_V1',
   APP_VERSION: app.getVersion() || '1.0.2'
 };
-// =================================
 
 function createSplash() {
   splashWindow = new BrowserWindow({
@@ -70,7 +67,6 @@ async function getReleaseDate(version) {
       resolve(null);
     });
 
-    // Timeout after 5 seconds
     req.setTimeout(5000, () => {
       req.destroy();
       resolve(null);
@@ -93,24 +89,17 @@ async function createMainWindow() {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      // Optional: Add a preload script if needed for additional security
     }
   });
   
-  // ===== ENHANCED AUTHENTICATION SETUP =====
-  // 1. Set custom User Agent for your app
   mainWindow.webContents.setUserAgent(`StatusStrap-App/${APP_CONFIG.APP_VERSION} Electron/${process.versions.electron}`);
   
-  // 2. Inject authentication token IMMEDIATELY when page loads
   mainWindow.webContents.on('did-start-loading', () => {
-    // Inject immediately, don't wait for did-finish-load
     mainWindow.webContents.executeJavaScript(`
-      // Clear any previous auth flags
       delete window.__STATUSSTRAP_APP;
       delete window.__APP_TOKEN;
       delete window.__STATUSSTRAP_AUTH_EVENT;
       
-      // Set app authentication flags IMMEDIATELY
       window.__STATUSSTRAP_APP = true;
       window.__APP_TOKEN = '${APP_CONFIG.APP_TOKEN}';
       window.__APP_VERSION = '${APP_CONFIG.APP_VERSION}';
@@ -123,16 +112,12 @@ async function createMainWindow() {
     `).catch(err => console.error('Failed to inject immediate auth:', err));
   });
   
-  // 3. Reinforce authentication after page loads
   mainWindow.webContents.on('did-finish-load', () => {
-    // Reinforce authentication with event dispatch
     mainWindow.webContents.executeJavaScript(`
-      // Re-set app authentication flags (in case page overwrote them)
       window.__STATUSSTRAP_APP = true;
       window.__APP_TOKEN = '${APP_CONFIG.APP_TOKEN}';
       window.__STATUSSTRAP_AUTH_EVENT = true;
       
-      // Dispatch authentication event for React to listen to
       window.dispatchEvent(new CustomEvent('statusstrap-app-authenticated', {
         detail: {
           token: '${APP_CONFIG.APP_TOKEN}',
@@ -144,7 +129,6 @@ async function createMainWindow() {
       console.log('[StatusStrap Desktop App] Authentication reinforced with event');
       console.log('[StatusStrap Desktop App] Event dispatched to React');
       
-      // Add debug info to window for easy debugging
       window.__ELECTRON_DEBUG = {
         authenticated: true,
         version: '${APP_CONFIG.APP_VERSION}',
@@ -154,7 +138,6 @@ async function createMainWindow() {
     `).catch(err => console.error('Failed to reinforce auth:', err));
   });
   
-  // 4. Add custom headers to all requests
   mainWindow.webContents.session.webRequest.onBeforeSendHeaders(
     (details, callback) => {
       details.requestHeaders['X-StatusStrap-App'] = APP_CONFIG.APP_VERSION;
@@ -165,29 +148,23 @@ async function createMainWindow() {
     }
   );
   
-  // 5. Listen for when the main window is about to navigate
   mainWindow.webContents.on('will-navigate', (event, url) => {
     console.log('Navigation attempt to:', url);
-    // Prevent navigation away from your domain (optional)
     if (!url.includes('eiuyrqweptwoeihfdsjkcbnaadjxblfskjdhvndsbflav.vercel.app')) {
       event.preventDefault();
       console.log('Blocked navigation to external URL');
     }
   });
   
-  // 6. Block any attempts to open new windows
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    // Only allow URLs from your domain
     if (url.includes('eiuyrqweptwoeihfdsjkcbnaadjxblfskjdhvndsbflav.vercel.app') || url.includes('github.com')) {
       return { action: 'allow' };
     }
     return { action: 'deny' };
   });
-  // =================================
   
   mainWindow.loadURL('https://eiuyrqweptwoeihfdsjkcbnaadjxblfskjdhvndsbflav.vercel.app');
   
-  // Fetch release date in the background
   getReleaseDate(version).then(releaseDate => {
     if (mainWindow && !mainWindow.isDestroyed()) {
       const title = releaseDate 
@@ -199,18 +176,15 @@ async function createMainWindow() {
   
   mainWindow.once('ready-to-show', () => {
     if (splashWindow && !splashWindow.isDestroyed()) {
-      // Wait longer before starting transition (let user see "Starting app..." message)
       setTimeout(() => {
         if (splashWindow.isDestroyed()) {
           mainWindow.show();
           return;
         }
         
-        // Smooth transition from splash to main
         const splashBounds = splashWindow.getBounds();
         const targetBounds = { x: splashBounds.x - 350, y: splashBounds.y - 250, width: 1200, height: 800 };
         
-        // Animate splash window resize (slower - 40 steps instead of 20)
         let steps = 40;
         let currentStep = 0;
         
@@ -219,30 +193,26 @@ async function createMainWindow() {
             clearInterval(resizeInterval);
             
             if (!splashWindow.isDestroyed()) {
-              // Position main window at final location
               mainWindow.setBounds(targetBounds);
               mainWindow.setOpacity(0);
               mainWindow.show();
               
-              // Wait a moment with black screen
               setTimeout(() => {
-                // Close splash
                 if (!splashWindow.isDestroyed()) {
                   splashWindow.close();
                 }
                 
-                // Fade in main window slowly
                 let opacity = 0;
                 const fadeInterval = setInterval(() => {
-                  opacity += 0.02; // Slower fade (was 0.05)
+                  opacity += 0.02;
                   if (opacity >= 1) {
                     mainWindow.setOpacity(1);
                     clearInterval(fadeInterval);
                   } else {
                     mainWindow.setOpacity(opacity);
                   }
-                }, 20); // Slightly slower interval
-              }, 300); // Show black screen for 300ms
+                }, 20);
+              }, 300);
             }
             return;
           }
@@ -251,7 +221,7 @@ async function createMainWindow() {
           const progress = currentStep / steps;
           const easeProgress = progress < 0.5 
             ? 2 * progress * progress 
-            : 1 - Math.pow(-2 * progress + 2, 2) / 2; // easeInOutQuad
+            : 1 - Math.pow(-2 * progress + 2, 2) / 2;
           
           const newBounds = {
             x: Math.round(splashBounds.x + (targetBounds.x - splashBounds.x) * easeProgress),
@@ -263,8 +233,8 @@ async function createMainWindow() {
           if (!splashWindow.isDestroyed()) {
             splashWindow.setBounds(newBounds);
           }
-        }, 20); // Slightly slower (was 16ms)
-      }, 2000); // Wait 2 seconds after main window is ready before starting transition
+        }, 20);
+      }, 2000);
     } else {
       mainWindow.show();
     }
@@ -272,7 +242,6 @@ async function createMainWindow() {
 }
 
 function setupAutoUpdater() {
-  // Only check for updates in production
   if (!app.isPackaged) {
     console.log('Dev mode: Skipping auto-update check');
     return false;
@@ -284,14 +253,12 @@ function setupAutoUpdater() {
   console.log('Owner: Orbit-Softworks');
   console.log('Repo: statusstrap-windows-application');
   
-  // CRITICAL: Configure auto-updater
-  autoUpdater.autoDownload = true; // Must be true!
-  autoUpdater.autoInstallOnAppQuit = true; // Install on quit
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
   autoUpdater.allowDowngrade = false;
   autoUpdater.allowPrerelease = false;
   autoUpdater.fullChangelog = true;
   
-  // Event handlers
   autoUpdater.on('checking-for-update', () => {
     console.log('Checking for updates...');
     if (splashWindow) {
@@ -310,7 +277,6 @@ function setupAutoUpdater() {
       splashWindow.webContents.send('progress', 0);
     }
     
-    // Auto-download should start automatically with autoDownload = true
     console.log('Auto-download starting...');
   });
   
@@ -347,18 +313,15 @@ function setupAutoUpdater() {
       splashWindow.webContents.send('progress', 100);
       splashWindow.webContents.send('status', 'Update downloaded!');
       
-      // Ask user to restart (or auto-restart after delay)
       setTimeout(() => {
         splashWindow.webContents.send('status', 'Restarting to install update...');
         
-        // Give user 2 seconds to see the message, then restart
         setTimeout(() => {
           console.log('Calling quitAndInstall()...');
-          autoUpdater.quitAndInstall(true, true); // isSilent = true, isForceRunAfter = true
+          autoUpdater.quitAndInstall(true, true);
         }, 2000);
       }, 1000);
     } else {
-      // If no splash window, just install
       autoUpdater.quitAndInstall(true, true);
     }
   });
@@ -368,7 +331,6 @@ function setupAutoUpdater() {
     console.error('Error message:', err.message);
     console.error('Error stack:', err.stack);
     
-    // Check for specific errors
     if (err.message.includes('404') || err.message.includes('Not Found')) {
       console.error('ERROR: latest.yml or installer not found on GitHub');
       console.error('Check that the release contains: latest.yml and .exe file');
@@ -380,7 +342,6 @@ function setupAutoUpdater() {
       console.error('ERROR: GitHub API error');
     }
     
-    // Continue to app even if update fails
     if (splashWindow) {
       splashWindow.webContents.send('status', 'Update failed, starting app...');
       setTimeout(() => createMainWindow(), 1500);
@@ -394,28 +355,24 @@ function setupAutoUpdater() {
 
 function checkForUpdates() {
   if (!setupAutoUpdater()) {
-    // Not in production, just start the app
     setTimeout(() => createMainWindow(), 2000);
     return;
   }
   
   console.log('Starting update check...');
   
-  // Set a timeout in case update check hangs
   const updateTimeout = setTimeout(() => {
     console.log('Update check timeout, starting app...');
     if (splashWindow) {
       splashWindow.webContents.send('status', 'Starting app...');
       setTimeout(() => createMainWindow(), 1000);
     }
-  }, 15000); // 15 second timeout
+  }, 15000);
   
-  // Start the update check
   autoUpdater.checkForUpdates().then(result => {
     clearTimeout(updateTimeout);
     console.log('Update check result:', result);
     
-    // If no update available, result will be null
     if (!result || !result.updateInfo) {
       console.log('No update found or already up to date');
       if (splashWindow) {
@@ -438,7 +395,6 @@ app.on('ready', () => {
   console.log(`App Token: ${APP_CONFIG.APP_TOKEN}`);
   createSplash();
   
-  // Wait for splash to render, then check for updates
   setTimeout(() => {
     checkForUpdates();
   }, 1000);
@@ -452,7 +408,6 @@ ipcMain.on('get-version', (event) => {
   event.returnValue = app.getVersion();
 });
 
-// Debug helper
 global.debugUpdate = () => {
   console.log('=== MANUAL UPDATE DEBUG ===');
   if (app.isPackaged) {
@@ -462,14 +417,11 @@ global.debugUpdate = () => {
   }
 };
 
-// Force update check (for testing)
 global.forceUpdateCheck = () => {
   console.log('=== FORCE UPDATE CHECK ===');
   checkForUpdates();
 };
 
-// ===== ENHANCED AUTHENTICATION DEBUGGING =====
-// Add a way to manually trigger auth injection (for testing)
 global.injectAuth = () => {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.executeJavaScript(`
@@ -478,7 +430,6 @@ global.injectAuth = () => {
       window.__APP_TOKEN = '${APP_CONFIG.APP_TOKEN}';
       window.__STATUSSTRAP_AUTH_EVENT = true;
       
-      // Dispatch authentication event
       window.dispatchEvent(new CustomEvent('statusstrap-app-authenticated', {
         detail: {
           token: '${APP_CONFIG.APP_TOKEN}',
@@ -493,7 +444,6 @@ global.injectAuth = () => {
   }
 };
 
-// Check authentication status
 global.checkAuthStatus = () => {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.executeJavaScript(`
@@ -516,7 +466,6 @@ global.checkAuthStatus = () => {
   }
 };
 
-// Simulate website authentication (for testing)
 global.simulateWebsite = () => {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.executeJavaScript(`
@@ -534,7 +483,6 @@ global.simulateWebsite = () => {
   }
 };
 
-// Force re-authentication
 global.reauthenticate = () => {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.executeJavaScript(`
