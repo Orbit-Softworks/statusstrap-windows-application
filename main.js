@@ -1,6 +1,7 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const log = require('electron-log');
+const path = require('path');
 const https = require('https');
 
 let splashWindow;
@@ -67,7 +68,6 @@ async function getReleaseDate(version) {
       resolve(null);
     });
 
-    // Timeout after 5 seconds
     req.setTimeout(5000, () => {
       req.destroy();
       resolve(null);
@@ -86,10 +86,15 @@ async function createMainWindow() {
     show: false,
     title: `StatusStrap | v${version} | Loading...`,
     roundedCorners: true,
-    backgroundColor: '#ffffff'
+    backgroundColor: '#000000',
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true
+    }
   });
   
-  mainWindow.loadURL('https://statusstrap.live');
+  // CHANGED: Load local index.html instead of website
+  mainWindow.loadFile('index.html');
   
   // Fetch release date in the background
   getReleaseDate(version).then(releaseDate => {
@@ -104,6 +109,12 @@ async function createMainWindow() {
   mainWindow.once('ready-to-show', () => {
     if (splashWindow) splashWindow.close();
     mainWindow.show();
+  });
+
+  // Open external links in default browser
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    require('electron').shell.openExternal(url);
+    return { action: 'deny' };
   });
 }
 
@@ -120,14 +131,12 @@ function setupAutoUpdater() {
   console.log('Owner: Orbit-Softworks');
   console.log('Repo: statusstrap-app');
   
-  // CRITICAL: Configure auto-updater
-  autoUpdater.autoDownload = true; // Must be true!
-  autoUpdater.autoInstallOnAppQuit = true; // Install on quit
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
   autoUpdater.allowDowngrade = false;
   autoUpdater.allowPrerelease = false;
   autoUpdater.fullChangelog = true;
   
-  // Event handlers
   autoUpdater.on('checking-for-update', () => {
     console.log('Checking for updates...');
     if (splashWindow) {
@@ -139,15 +148,11 @@ function setupAutoUpdater() {
     console.log('=== UPDATE AVAILABLE ===');
     console.log('Version:', info.version);
     console.log('Release date:', info.releaseDate);
-    console.log('Release notes:', info.releaseNotes);
     
     if (splashWindow) {
       splashWindow.webContents.send('status', `Update ${info.version} available!`);
       splashWindow.webContents.send('progress', 0);
     }
-    
-    // Auto-download should start automatically with autoDownload = true
-    console.log('Auto-download starting...');
   });
   
   autoUpdater.on('update-not-available', (info) => {
@@ -166,8 +171,6 @@ function setupAutoUpdater() {
   autoUpdater.on('download-progress', (progress) => {
     const percent = Math.floor(progress.percent);
     console.log(`Download progress: ${percent}%`);
-    console.log('Bytes per second:', progress.bytesPerSecond);
-    console.log('Transferred:', progress.transferred, 'Total:', progress.total);
     
     if (splashWindow) {
       splashWindow.webContents.send('progress', percent);
@@ -183,18 +186,15 @@ function setupAutoUpdater() {
       splashWindow.webContents.send('progress', 100);
       splashWindow.webContents.send('status', 'Update downloaded!');
       
-      // Ask user to restart (or auto-restart after delay)
       setTimeout(() => {
         splashWindow.webContents.send('status', 'Restarting to install update...');
         
-        // Give user 2 seconds to see the message, then restart
         setTimeout(() => {
           console.log('Calling quitAndInstall()...');
-          autoUpdater.quitAndInstall(true, true); // isSilent = true, isForceRunAfter = true
+          autoUpdater.quitAndInstall(true, true);
         }, 2000);
       }, 1000);
     } else {
-      // If no splash window, just install
       autoUpdater.quitAndInstall(true, true);
     }
   });
@@ -202,21 +202,7 @@ function setupAutoUpdater() {
   autoUpdater.on('error', (err) => {
     console.error('=== AUTO-UPDATE ERROR ===');
     console.error('Error message:', err.message);
-    console.error('Error stack:', err.stack);
     
-    // Check for specific errors
-    if (err.message.includes('404') || err.message.includes('Not Found')) {
-      console.error('ERROR: latest.yml or installer not found on GitHub');
-      console.error('Check that the release contains: latest.yml and .exe file');
-    } else if (err.message.includes('sha512') || err.message.includes('checksum')) {
-      console.error('ERROR: File hash mismatch');
-    } else if (err.message.includes('net::ERR')) {
-      console.error('ERROR: Network error');
-    } else if (err.message.includes('GitHub')) {
-      console.error('ERROR: GitHub API error');
-    }
-    
-    // Continue to app even if update fails
     if (splashWindow) {
       splashWindow.webContents.send('status', 'Update failed, starting app...');
       setTimeout(() => createMainWindow(), 1500);
@@ -230,28 +216,24 @@ function setupAutoUpdater() {
 
 function checkForUpdates() {
   if (!setupAutoUpdater()) {
-    // Not in production, just start the app
     setTimeout(() => createMainWindow(), 2000);
     return;
   }
   
   console.log('Starting update check...');
   
-  // Set a timeout in case update check hangs
   const updateTimeout = setTimeout(() => {
     console.log('Update check timeout, starting app...');
     if (splashWindow) {
       splashWindow.webContents.send('status', 'Starting app...');
       setTimeout(() => createMainWindow(), 1000);
     }
-  }, 15000); // 15 second timeout
+  }, 15000);
   
-  // Start the update check
   autoUpdater.checkForUpdates().then(result => {
     clearTimeout(updateTimeout);
     console.log('Update check result:', result);
     
-    // If no update available, result will be null
     if (!result || !result.updateInfo) {
       console.log('No update found or already up to date');
       if (splashWindow) {
@@ -273,7 +255,6 @@ app.on('ready', () => {
   console.log(`StatusStrap v${app.getVersion()} starting...`);
   createSplash();
   
-  // Wait for splash to render, then check for updates
   setTimeout(() => {
     checkForUpdates();
   }, 1000);
@@ -286,19 +267,3 @@ app.on('window-all-closed', () => {
 ipcMain.on('get-version', (event) => {
   event.returnValue = app.getVersion();
 });
-
-// Debug helper
-global.debugUpdate = () => {
-  console.log('=== MANUAL UPDATE DEBUG ===');
-  if (app.isPackaged) {
-    autoUpdater.checkForUpdatesAndNotify();
-  } else {
-    console.log('Not in production mode');
-  }
-};
-
-// Force update check (for testing)
-global.forceUpdateCheck = () => {
-  console.log('=== FORCE UPDATE CHECK ===');
-  checkForUpdates();
-};
