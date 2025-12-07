@@ -1,15 +1,214 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, Menu, globalShortcut, session } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const log = require('electron-log');
 const https = require('https');
 
 let splashWindow;
 let mainWindow;
+let securityCheckInterval;
 
 const APP_CONFIG = {
   APP_TOKEN: process.env.APP_TOKEN || 'STATUSSTRAP_APP_SECRET_2024_V1',
   APP_VERSION: app.getVersion() || '1.0.2'
 };
+
+// === EXTREME SECURITY MEASURES ===
+function applyExtremeSecurity(window) {
+  if (!window || window.isDestroyed()) return;
+  
+  // 1. Remove all menus
+  Menu.setApplicationMenu(null);
+  window.setMenu(null);
+  
+  // 2. Disable ALL dev tools (even in dev mode for production builds)
+  window.webContents.closeDevTools();
+  window.webContents.setDevToolsWebContents(null);
+  window.webContents.on('devtools-opened', () => {
+    window.webContents.closeDevTools();
+    // Force close if somehow opened
+    setTimeout(() => {
+      if (!window.isDestroyed()) {
+        window.webContents.closeDevTools();
+      }
+    }, 10);
+  });
+  
+  // 3. Block ALL devtools-related shortcuts GLOBALLY
+  globalShortcut.registerAll([
+    'F12',
+    'CommandOrControl+Shift+I',
+    'CommandOrControl+Shift+J',
+    'CommandOrControl+Shift+C',
+    'CommandOrControl+U',
+    'CommandOrControl+Shift+R',
+    'CommandOrControl+R',
+    'CommandOrControl+Shift+U',
+    'Alt+CommandOrControl+I',
+    'Option+CommandOrControl+I'
+  ], () => {
+    console.log('DevTools shortcut blocked globally');
+    return true; // Block the shortcut
+  });
+  
+  // 4. Block input at window level
+  window.webContents.on('before-input-event', (event, input) => {
+    // Block ALL function keys that could open dev tools
+    if (input.key.startsWith('F') && input.key.length <= 3) {
+      const fnNum = parseInt(input.key.substring(1));
+      if (fnNum >= 1 && fnNum <= 12) {
+        event.preventDefault();
+        return;
+      }
+    }
+    
+    // Block ALL Ctrl/Cmd+Shift+[Key] combinations
+    if ((input.control || input.meta) && input.shift) {
+      const blockedKeys = ['I', 'J', 'C', 'K', 'U', 'R', 'S', 'D'];
+      if (blockedKeys.includes(input.key.toUpperCase())) {
+        event.preventDefault();
+        return;
+      }
+    }
+    
+    // Block Alt+Menu
+    if (input.alt && input.key === 'Menu') {
+      event.preventDefault();
+      return;
+    }
+    
+    // Block Ctrl/Cmd+U (view source)
+    if ((input.control || input.meta) && input.key.toUpperCase() === 'U') {
+      event.preventDefault();
+      return;
+    }
+  });
+  
+  // 5. Disable right-click
+  window.webContents.on('context-menu', (event) => {
+    event.preventDefault();
+  });
+  
+  // 6. Disable any devtools-related APIs
+  if (app.isPackaged) {
+    // Override devtools API if it exists
+    window.webContents.executeJavaScript(`
+      // Override any devtools-related functions
+      if (window.devtools && window.devtools._inspectedWindow) {
+        window.devtools._inspectedWindow = null;
+      }
+      
+      // Disable console methods in production
+      if (window.console) {
+        const originalConsole = {...console};
+        console.clear = function() {};
+        console.debug = function() {};
+        console.dir = function() {};
+        console.dirxml = function() {};
+        console.table = function() {};
+        console.trace = function() {};
+        console.group = function() {};
+        console.groupCollapsed = function() {};
+        console.groupEnd = function() {};
+        
+        // Still allow error/warning for debugging but redirect
+        console.log = function(...args) {
+          originalConsole.log('[StatusStrap Log]:', ...args);
+        };
+        console.error = function(...args) {
+          originalConsole.error('[StatusStrap Error]:', ...args);
+        };
+        console.warn = function(...args) {
+          originalConsole.warn('[StatusStrap Warning]:', ...args);
+        };
+      }
+      
+      // Block opening devtools via JavaScript
+      Object.defineProperty(document, 'openDevTools', {
+        value: function() {
+          console.log('DevTools access blocked');
+          return null;
+        },
+        writable: false,
+        configurable: false
+      });
+      
+      // Disable eval
+      window.eval = null;
+      
+      // Remove __devtools properties
+      delete window.__REACT_DEVTOOLS_GLOBAL_HOOK__;
+      delete window.__VUE_DEVTOOLS_GLOBAL_HOOK__;
+      delete window.__REDUX_DEVTOOLS_EXTENSION__;
+      delete window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__;
+    `).catch(() => {});
+  }
+  
+  // 7. Block navigation to devtools
+  window.webContents.on('will-navigate', (event, url) => {
+    if (url.includes('chrome-devtools://') || 
+        url.includes('devtools://') || 
+        url.includes('chrome://inspect')) {
+      event.preventDefault();
+      return;
+    }
+  });
+  
+  // 8. Block any new windows that might be devtools
+  window.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.includes('chrome-devtools://') || 
+        url.includes('devtools://') || 
+        url.includes('chrome://inspect')) {
+      return { action: 'deny' };
+    }
+    return { action: 'allow' };
+  });
+  
+  // 9. Periodic devtools check (every 2 seconds)
+  if (securityCheckInterval) {
+    clearInterval(securityCheckInterval);
+  }
+  
+  securityCheckInterval = setInterval(() => {
+    if (window && !window.isDestroyed()) {
+      // Force close devtools if somehow opened
+      window.webContents.closeDevTools();
+      
+      // Check if devtools are focused (could be separate window)
+      window.webContents.executeJavaScript(`
+        // Check if devtools are open via any method
+        const isDevToolsOpen = 
+          navigator.userAgent.includes('Chrome') && 
+          (document.documentElement.style.height === '100%' || 
+           window.outerHeight - window.innerHeight > 100);
+        
+        // If devtools detected, trigger security response
+        if (isDevToolsOpen) {
+          console.warn('Security violation: DevTools detected');
+          // Could trigger a logout or security action here
+          return true;
+        }
+        return false;
+      `).then((detected) => {
+        if (detected && window && !window.isDestroyed()) {
+          console.log('Security: DevTools detected, taking action');
+          window.webContents.closeDevTools();
+          
+          // Optional: Show warning or take action
+          window.webContents.executeJavaScript(`
+            alert('Security Warning: Developer Tools are not allowed in this application.');
+            // Clear sensitive data if devtools detected
+            if (window.__APP_TOKEN) {
+              delete window.__APP_TOKEN;
+              delete window.__STATUSSTRAP_APP;
+              // Trigger re-auth or logout
+              window.location.reload();
+            }
+          `).catch(() => {});
+        }
+      }).catch(() => {});
+    }
+  }, 2000);
+}
 
 function createSplash() {
   splashWindow = new BrowserWindow({
@@ -18,16 +217,38 @@ function createSplash() {
     frame: false,
     transparent: true,
     center: true,
+    resizable: false,
+    maximizable: false,
+    fullscreenable: false,
     webPreferences: {
       nodeIntegration: true,
-      contextIsolation: false
+      contextIsolation: false,
+      devTools: false, // Force disable
+      webSecurity: true,
+      allowRunningInsecureContent: false,
+      webgl: false,
+      plugins: false,
+      experimentalFeatures: false,
+      enableBlinkFeatures: '',
+      disableBlinkFeatures: 'ScriptStreaming'
     }
   });
+  
+  // Apply extreme security
+  applyExtremeSecurity(splashWindow);
+  
+  // Block any devtools attempt
+  splashWindow.webContents.on('devtools-opened', () => {
+    splashWindow.closeDevTools();
+    splashWindow.destroy();
+  });
+  
   splashWindow.loadFile('splash.html');
   splashWindow.webContents.send('status', 'Starting StatusStrap...');
 }
 
 async function getReleaseDate(version) {
+  // ... (keep your existing getReleaseDate function)
   return new Promise((resolve) => {
     const options = {
       hostname: 'api.github.com',
@@ -86,16 +307,190 @@ async function createMainWindow() {
     title: `StatusStrap | v${version} | Loading...`,
     roundedCorners: true,
     backgroundColor: '#000000',
+    resizable: true,
+    maximizable: true,
+    fullscreenable: true,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
+      devTools: false, // Force disable
+      webSecurity: true,
+      allowRunningInsecureContent: false,
+      experimentalFeatures: false,
+      enableBlinkFeatures: '',
+      disableBlinkFeatures: 'ScriptStreaming',
+      nodeIntegrationInWorker: false,
+      nodeIntegrationInSubFrames: false,
+      safeDialogs: true,
+      safeDialogsMessage: 'StatusStrap Security Warning',
+      disableHtmlFullscreenWindowResize: false
     }
+  });
+  
+  // Apply extreme security to main window
+  applyExtremeSecurity(mainWindow);
+  
+  // Additional: Block iframe devtools
+  mainWindow.webContents.on('devtools-open-url', (event, url) => {
+    event.preventDefault();
+  });
+  
+  // Block all devtools-related IPC messages
+  ipcMain.on('open-devtools', (event) => {
+    event.returnValue = false;
+  });
+  
+  ipcMain.on('toggle-devtools', (event) => {
+    event.returnValue = false;
   });
   
   mainWindow.webContents.setUserAgent(`StatusStrap-App/${APP_CONFIG.APP_VERSION} Electron/${process.versions.electron}`);
   
+  // Inject security code BEFORE page loads
   mainWindow.webContents.on('did-start-loading', () => {
     mainWindow.webContents.executeJavaScript(`
+      // === SECURITY OVERRIDES ===
+      // Override console before anything else
+      (function() {
+        const originalConsole = window.console || {};
+        const noop = function() {};
+        
+        // In production, severely limit console
+        if (window.location.protocol !== 'file:') {
+          window.console = {
+            log: function(...args) {
+              originalConsole.log && originalConsole.log('[StatusStrap]:', ...args);
+            },
+            error: function(...args) {
+              originalConsole.error && originalConsole.error('[StatusStrap Error]:', ...args);
+            },
+            warn: function(...args) {
+              originalConsole.warn && originalConsole.warn('[StatusStrap Warning]:', ...args);
+            },
+            info: noop,
+            debug: noop,
+            dir: noop,
+            dirxml: noop,
+            table: noop,
+            trace: noop,
+            group: noop,
+            groupCollapsed: noop,
+            groupEnd: noop,
+            clear: noop,
+            count: noop,
+            assert: noop,
+            markTimeline: noop,
+            profile: noop,
+            profileEnd: noop,
+            timeline: noop,
+            timelineEnd: noop,
+            time: noop,
+            timeEnd: noop,
+            timeStamp: noop,
+            memory: noop
+          };
+        }
+        
+        // Block eval
+        window.eval = null;
+        window.eval.toString = function() { return 'function eval() { [native code] }'; };
+        
+        // Block Function constructor
+        window.Function = function() {
+          throw new Error('EvalError: Function constructor is disabled');
+        };
+        
+        // Block setTimeout/setInterval with strings
+        const originalSetTimeout = window.setTimeout;
+        const originalSetInterval = window.setInterval;
+        
+        window.setTimeout = function(fn, delay) {
+          if (typeof fn === 'string') {
+            throw new Error('SecurityError: String arguments to setTimeout are not allowed');
+          }
+          return originalSetTimeout.call(this, fn, delay);
+        };
+        
+        window.setInterval = function(fn, delay) {
+          if (typeof fn === 'string') {
+            throw new Error('SecurityError: String arguments to setInterval are not allowed');
+          }
+          return originalSetInterval.call(this, fn, delay);
+        };
+        
+        // Block opening devtools via inspect
+        document.addEventListener('inspect', function(e) {
+          e.preventDefault();
+          return false;
+        }, true);
+        
+        // Block all right-clicks
+        document.addEventListener('contextmenu', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          e.stopImmediatePropagation();
+          return false;
+        }, true);
+        
+        // Block all keyboard shortcuts for devtools
+        document.addEventListener('keydown', function(e) {
+          // Block F1-F12
+          if (e.key.startsWith('F') && e.key.length <= 3) {
+            const fnNum = parseInt(e.key.substring(1));
+            if (fnNum >= 1 && fnNum <= 12) {
+              e.preventDefault();
+              e.stopPropagation();
+              return false;
+            }
+          }
+          
+          // Block Ctrl/Cmd+Shift+ combinations
+          if ((e.ctrlKey || e.metaKey) && e.shiftKey) {
+            const blockedKeys = ['I', 'J', 'C', 'K', 'U', 'R', 'S', 'D', 'H', 'P', 'O', 'L', 'M'];
+            if (blockedKeys.includes(e.key.toUpperCase())) {
+              e.preventDefault();
+              e.stopPropagation();
+              return false;
+            }
+          }
+          
+          // Block Ctrl/Cmd+U
+          if ((e.ctrlKey || e.metaKey) && e.key.toUpperCase() === 'U' && !e.shiftKey) {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+          }
+          
+          // Block Alt+Menu
+          if (e.altKey && e.key === 'Menu') {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+          }
+        }, true);
+        
+        // Remove devtools hooks
+        delete window.__REACT_DEVTOOLS_GLOBAL_HOOK__;
+        delete window.__VUE_DEVTOOLS_GLOBAL_HOOK__;
+        delete window.__REDUX_DEVTOOLS_EXTENSION__;
+        delete window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__;
+        delete window.__ANGULAR_DEVTOOLS__;
+        
+        // Block devtools detection bypass attempts
+        Object.defineProperty(document, 'hidden', {
+          get: function() { return false; },
+          configurable: false
+        });
+        
+        Object.defineProperty(document, 'visibilityState', {
+          get: function() { return 'visible'; },
+          configurable: false
+        });
+        
+        console.log('[StatusStrap Security]: Maximum security layer activated');
+      })();
+      
+      // Inject auth data
       delete window.__STATUSSTRAP_APP;
       delete window.__APP_TOKEN;
       delete window.__STATUSSTRAP_AUTH_EVENT;
@@ -106,12 +501,11 @@ async function createMainWindow() {
       window.__ELECTRON = true;
       window.__ELECTRON_VERSION = '${process.versions.electron}';
       
-      console.log('[StatusStrap Desktop App] Authentication injected IMMEDIATELY');
-      console.log('[StatusStrap Desktop App] Version: ${APP_CONFIG.APP_VERSION}');
-      console.log('[StatusStrap Desktop App] Token injected: '${APP_CONFIG.APP_TOKEN.substring(0, 8)}...');
-    `).catch(err => console.error('Failed to inject immediate auth:', err));
+      console.log('[StatusStrap Desktop App] Authentication injected with security layer');
+    `).catch(err => console.error('Security injection failed:', err));
   });
   
+  // Your existing did-finish-load code...
   mainWindow.webContents.on('did-finish-load', () => {
     mainWindow.webContents.executeJavaScript(`
       window.__STATUSSTRAP_APP = true;
@@ -127,7 +521,6 @@ async function createMainWindow() {
       }));
       
       console.log('[StatusStrap Desktop App] Authentication reinforced with event');
-      console.log('[StatusStrap Desktop App] Event dispatched to React');
       
       window.__ELECTRON_DEBUG = {
         authenticated: true,
@@ -138,6 +531,7 @@ async function createMainWindow() {
     `).catch(err => console.error('Failed to reinforce auth:', err));
   });
   
+  // Your existing headers code...
   mainWindow.webContents.session.webRequest.onBeforeSendHeaders(
     (details, callback) => {
       details.requestHeaders['X-StatusStrap-App'] = APP_CONFIG.APP_VERSION;
@@ -174,6 +568,7 @@ async function createMainWindow() {
     }
   });
   
+  // Your existing ready-to-show animation code...
   mainWindow.once('ready-to-show', () => {
     if (splashWindow && !splashWindow.isDestroyed()) {
       setTimeout(() => {
@@ -241,6 +636,7 @@ async function createMainWindow() {
   });
 }
 
+// Your existing auto-updater functions...
 function setupAutoUpdater() {
   if (!app.isPackaged) {
     console.log('Dev mode: Skipping auto-update check');
@@ -401,9 +797,25 @@ app.on('ready', () => {
 });
 
 app.on('window-all-closed', () => {
+  // Unregister all shortcuts when app closes
+  globalShortcut.unregisterAll();
+  
+  if (securityCheckInterval) {
+    clearInterval(securityCheckInterval);
+  }
+  
   if (process.platform !== 'darwin') app.quit();
 });
 
+app.on('will-quit', () => {
+  // Clean up
+  globalShortcut.unregisterAll();
+  if (securityCheckInterval) {
+    clearInterval(securityCheckInterval);
+  }
+});
+
+// Your existing IPC handlers and global functions...
 ipcMain.on('get-version', (event) => {
   event.returnValue = app.getVersion();
 });
