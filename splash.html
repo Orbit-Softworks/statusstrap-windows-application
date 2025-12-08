@@ -6,14 +6,12 @@
   <style>
     :root {
       --primary-color: #ffffff;
-      --secondary-color: #aaaaaa;
-      --bg-color: #0a0a0a;
-      --card-bg: #111111;
+      --secondary-color: #888888;
+      --bg-color: #000000;
       --progress-track: #222222;
-      --progress-fill: #4ade80;
-      --accent-glow: rgba(74, 222, 128, 0.2);
-      --border-color: #333333;
-      --transition-speed: 0.6s;
+      --progress-fill: #ffffff;
+      --accent-glow: rgba(255, 255, 255, 0.15);
+      --transition-speed: 0.6s; /* Slower transitions */
     }
 
     * {
@@ -31,110 +29,67 @@
       justify-content: center;
       align-items: center;
       height: 100vh;
+      text-align: center;
       overflow: hidden;
       opacity: 0;
-      animation: fadeIn 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+      animation: fadeIn 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards; /* Slower */
       user-select: none;
       padding: 20px;
-      background-image: 
-        radial-gradient(circle at 20% 30%, rgba(74, 222, 128, 0.05) 0%, transparent 50%),
-        radial-gradient(circle at 80% 70%, rgba(74, 222, 128, 0.03) 0%, transparent 50%);
     }
 
     @keyframes fadeIn {
       to { opacity: 1; }
     }
 
-    .app-container {
+    .container {
       width: 100%;
-      max-width: 420px;
-      background: var(--card-bg);
-      border-radius: 20px;
-      padding: 40px 30px;
-      box-shadow: 
-        0 20px 40px rgba(0, 0, 0, 0.5),
-        0 0 0 1px var(--border-color),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 25px; /* More spacing */
       position: relative;
-      overflow: hidden;
-      transform: translateY(30px) scale(0.98);
-      animation: slideUp 1.2s cubic-bezier(0.4, 0, 0.2, 1) 0.3s forwards;
-    }
-
-    .app-container::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, var(--progress-fill), transparent);
-      opacity: 0.3;
+      transform: translateY(30px); /* More noticeable initial offset */
+      animation: slideUp 1.2s cubic-bezier(0.4, 0, 0.2, 1) 0.3s forwards; /* Slower with delay */
     }
 
     @keyframes slideUp {
       to {
-        transform: translateY(0) scale(1);
+        transform: translateY(0);
       }
     }
 
-    .header {
+    .logo-container {
       text-align: center;
-      margin-bottom: 40px;
-      position: relative;
-    }
-
-    .logo {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      margin-bottom: 15px;
-    }
-
-    .logo-icon {
-      width: 32px;
-      height: 32px;
-      background: linear-gradient(135deg, var(--progress-fill), #22c55e);
-      border-radius: 8px;
-      position: relative;
-      transform: rotate(45deg);
-      opacity: 0;
-      animation: iconReveal 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.6s forwards;
-    }
-
-    .logo-icon::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 16px;
-      height: 16px;
-      background: var(--bg-color);
-      border-radius: 4px;
-    }
-
-    @keyframes iconReveal {
-      to {
-        opacity: 1;
-        transform: rotate(0deg);
-      }
+      width: 100%;
     }
 
     h1 {
-      font-size: 2.5rem;
+      font-size: clamp(2rem, 8vw, 3rem);
       font-weight: 700;
-      letter-spacing: -0.5px;
+      letter-spacing: 1px;
       background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
+      margin-bottom: 10px;
       opacity: 0;
-      transform: translateY(-10px);
-      animation: textReveal 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.8s forwards;
+      transform: translateY(-20px);
+      animation: textReveal 1s cubic-bezier(0.4, 0, 0.2, 1) 0.6s forwards; /* Slower with delay */
       position: relative;
       line-height: 1.2;
+    }
+
+    h1::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 25%;
+      width: 50%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
+      transform: scaleX(0);
+      animation: lineExpand 0.8s cubic-bezier(0.4, 0, 0.2, 1) 1.2s forwards; /* Slower with delay */
     }
 
     @keyframes textReveal {
@@ -144,33 +99,28 @@
       }
     }
 
-    .version-badge {
-      display: inline-block;
-      background: rgba(255, 255, 255, 0.05);
-      padding: 6px 16px;
-      border-radius: 20px;
-      font-size: 0.875rem;
+    @keyframes lineExpand {
+      to {
+        transform: scaleX(1);
+      }
+    }
+
+    #version {
+      font-size: clamp(0.75rem, 3vw, 0.875rem);
       font-weight: 500;
       color: var(--secondary-color);
-      border: 1px solid var(--border-color);
       opacity: 0;
-      animation: fadeInUp 0.8s ease-out 1s forwards;
+      animation: fadeInUp 0.8s ease-out 1s forwards; /* Slower with delay */
       letter-spacing: 0.5px;
-      margin-top: 10px;
     }
 
-    .progress-section {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 30px;
-      margin: 30px 0;
-    }
-
-    .progress-container {
+    .progress-circle-container {
+      width: clamp(90px, 25vw, 130px);
+      height: clamp(90px, 25vw, 130px);
+      margin: 15px 0;
       position: relative;
-      width: 160px;
-      height: 160px;
+      opacity: 0;
+      animation: fadeInUp 0.9s cubic-bezier(0.4, 0, 0.2, 1) 1.4s forwards; /* Slower with delay */
     }
 
     .progress-circle-bg {
@@ -182,8 +132,8 @@
         var(--progress-track) 360deg
       );
       position: relative;
-      border: 2px solid var(--border-color);
-      transition: background 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+      transition: background 1.2s cubic-bezier(0.34, 1.56, 0.64, 1); /* Much slower, smoother */
     }
 
     .progress-circle-bg::before {
@@ -191,12 +141,11 @@
       position: absolute;
       width: 90%;
       height: 90%;
-      background: var(--card-bg);
+      background: var(--bg-color);
       border-radius: 50%;
       top: 5%;
       left: 5%;
       z-index: 1;
-      border: 1px solid rgba(255, 255, 255, 0.05);
     }
 
     .progress-circle-text {
@@ -204,113 +153,90 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      font-size: 2rem;
-      font-weight: 700;
+      font-size: clamp(1.1rem, 4vw, 1.6rem);
+      font-weight: 600;
       color: var(--primary-color);
       z-index: 2;
       opacity: 0.9;
-      transition: all 0.5s ease;
+      transition: all 0.5s ease; /* Slower */
     }
 
     .progress-circle-text.hidden {
       opacity: 0;
       transform: translate(-50%, -50%) scale(0.8);
-      transition: all 0.8s ease;
+      transition: all 0.8s ease; /* Slower for hiding */
     }
 
-    .spinner-ring {
+    .spinner {
       position: absolute;
-      top: -8px;
-      left: -8px;
-      right: -8px;
-      bottom: -8px;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
       border-radius: 50%;
-      border: 3px solid transparent;
-      border-top-color: var(--progress-fill);
-      animation: spin 2.5s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
+      border: 2px solid transparent;
+      border-top-color: var(--primary-color);
+      animation: spin 2s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite; /* Slower spin */
       z-index: 2;
-      opacity: 0;
-      animation: fadeIn 0.6s ease 1.4s forwards, spin 2.5s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
     }
 
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
 
-    .status-card {
-      background: rgba(255, 255, 255, 0.03);
-      border-radius: 16px;
-      padding: 20px;
-      border: 1px solid var(--border-color);
+    .status-container {
       width: 100%;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-      min-height: 80px;
+      min-height: 28px;
       display: flex;
-      align-items: center;
       justify-content: center;
-    }
-
-    .status-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(135deg, rgba(74, 222, 128, 0.05), transparent);
-      opacity: 0;
-      transition: opacity 0.5s ease;
-    }
-
-    .status-card.active::before {
-      opacity: 1;
+      align-items: center;
+      margin-top: 15px;
     }
 
     #status {
-      font-size: 1rem;
+      font-size: clamp(0.9rem, 3.5vw, 1.05rem);
       font-weight: 500;
-      transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1); /* Slower */
       opacity: 0;
-      transform: translateY(10px);
-      animation: fadeInUp 0.9s cubic-bezier(0.4, 0, 0.2, 1) 1.8s forwards;
+      transform: translateY(15px);
+      animation: fadeInUp 0.9s cubic-bezier(0.4, 0, 0.2, 1) 1.8s forwards; /* Slower with delay */
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      gap: 6px;
       line-height: 1.5;
       text-align: center;
       max-width: 100%;
       overflow-wrap: break-word;
-      position: relative;
-      z-index: 2;
+      min-height: 40px; /* Ensure height for better transitions */
     }
 
     #status.updated {
-      color: var(--progress-fill);
+      color: #4ade80;
     }
 
     #status.error {
-      color: #ef4444;
+      color: #f87171;
     }
 
+    /* Loading dots */
     .loading-dots {
       display: inline-flex;
-      align-items: center;
+      align-items: flex-end;
       height: 1em;
-      margin-left: 8px;
+      margin-left: 6px;
     }
 
     .loading-dots span {
-      width: 5px;
-      height: 5px;
+      width: 4px;
+      height: 4px;
       background: currentColor;
       border-radius: 50%;
-      animation: dots 2.1s infinite ease-in-out both;
+      animation: dots 2.1s infinite ease-in-out both; /* Slower dots */
       margin: 0 2px;
       display: inline-block;
-      vertical-align: middle;
+      position: relative;
+      bottom: -0.2em;
     }
 
     .loading-dots span:nth-child(1) {
@@ -323,30 +249,30 @@
 
     @keyframes dots {
       0%, 80%, 100% { 
-        transform: translateY(0) scale(0.8);
-        opacity: 0.3;
+        transform: scale(0);
+        opacity: 0;
       }
       40% { 
-        transform: translateY(-4px) scale(1.1);
+        transform: scale(1);
         opacity: 1;
       }
     }
 
     .progress-circle-bg.complete {
-      animation: pulseComplete 1.5s ease;
+      animation: pulseComplete 1.5s ease; /* Slower pulse */
     }
 
     @keyframes pulseComplete {
       0%, 100% { 
-        box-shadow: 0 0 0 0 rgba(74, 222, 128, 0);
+        box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
       }
       50% { 
-        box-shadow: 0 0 0 8px rgba(74, 222, 128, 0.1);
+        box-shadow: 0 0 40px rgba(255, 255, 255, 0.3);
       }
     }
 
     .finishing {
-      animation: fadeOut 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+      animation: fadeOut 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards; /* Slower exit */
     }
 
     @keyframes fadeOut {
@@ -359,7 +285,7 @@
     @keyframes fadeInUp {
       from {
         opacity: 0;
-        transform: translateY(15px);
+        transform: translateY(20px);
       }
       to {
         opacity: 1;
@@ -367,142 +293,110 @@
       }
     }
 
-    .footer {
-      margin-top: 30px;
-      text-align: center;
-      font-size: 0.8rem;
-      color: var(--secondary-color);
-      opacity: 0.6;
-      padding-top: 20px;
-      border-top: 1px solid var(--border-color);
-      animation: fadeIn 1s ease 2s forwards;
-      opacity: 0;
+    /* Status text transitions */
+    .status-transition {
+      transition: opacity 0.8s ease, transform 0.8s ease; /* Slower status transitions */
     }
 
+    /* Mobile adjustments */
     @media (max-width: 480px) {
       body {
         padding: 15px;
       }
       
-      .app-container {
-        padding: 30px 20px;
-        border-radius: 16px;
+      .container {
+        gap: 20px;
+        max-width: 320px;
       }
       
-      h1 {
-        font-size: 2rem;
+      .progress-circle-container {
+        width: 100px;
+        height: 100px;
+        margin: 10px 0;
       }
       
-      .progress-container {
-        width: 140px;
-        height: 140px;
-      }
-      
-      .progress-circle-text {
-        font-size: 1.8rem;
-      }
-      
-      .status-card {
-        padding: 16px;
-        min-height: 70px;
+      #status {
+        min-height: 36px;
+        font-size: 0.95rem;
       }
     }
 
     @media (max-height: 700px) {
-      .app-container {
-        padding: 25px 20px;
-      }
-      
-      .header {
-        margin-bottom: 30px;
-      }
-      
-      .progress-section {
-        margin: 20px 0;
+      .container {
         gap: 20px;
       }
-    }
-
-    .status-card.status-updating {
-      border-color: rgba(74, 222, 128, 0.3);
-    }
-    
-    .status-card.status-complete {
-      border-color: var(--progress-fill);
-    }
-    
-    .status-card.status-error {
-      border-color: #ef4444;
+      
+      h1 {
+        font-size: clamp(1.8rem, 7vw, 2.5rem);
+      }
     }
   </style>
 </head>
 <body>
-  <div class="app-container">
-    <div class="header">
-      <div class="logo">
-        <div class="logo-icon"></div>
-        <h1 id="appTitle">StatusStrap</h1>
-      </div>
-      <div class="version-badge" id="version">v1.0.12</div>
+  <div class="container">
+    <div class="logo-container">
+      <h1 id="appTitle">StatusStrap</h1>
+      <div id="version">v1.0.12</div>
     </div>
     
-    <div class="progress-section">
-      <div class="progress-container">
-        <div class="progress-circle-bg" id="progressCircle"></div>
-        <div class="progress-circle-text" id="progressText">0%</div>
-        <div class="spinner-ring"></div>
-      </div>
-      
-      <div class="status-card" id="statusCard">
-        <div id="status">Initializing<span class="loading-dots"><span></span><span></span><span></span></span></div>
-      </div>
+    <div class="progress-circle-container">
+      <div class="progress-circle-bg" id="progressCircle"></div>
+      <div class="progress-circle-text" id="progressText">0%</div>
+      <div class="spinner"></div>
     </div>
     
-    <div class="footer">
-      Checking for updates • StatusStrap Launcher
+    <div class="status-container">
+      <div id="status">Initializing application<span class="loading-dots"><span></span><span></span><span></span></span></div>
     </div>
   </div>
   
   <script>
     const { ipcRenderer } = require('electron');
     
+    // Get and display version
     const version = ipcRenderer.sendSync('get-version');
     document.getElementById('version').textContent = `v${version}`;
     
+    // DOM elements
     const progressCircle = document.getElementById('progressCircle');
     const progressText = document.getElementById('progressText');
     const statusEl = document.getElementById('status');
-    const statusCard = document.getElementById('statusCard');
-    const spinnerRing = document.querySelector('.spinner-ring');
+    const spinner = document.querySelector('.spinner');
     
+    // Variables for smoother percentage tracking
     let currentProgress = 0;
     let targetProgress = 0;
     let lastUpdateTime = 0;
-    const MIN_UPDATE_INTERVAL = 400;
-    const ANIMATION_DURATION = 1400;
+    const MIN_UPDATE_INTERVAL = 300; // Minimum 300ms between percentage updates
+    const ANIMATION_DURATION = 1200; // 1.2 seconds for progress animations
     
+    // Smooth progress animation
     function animateProgress() {
       const now = Date.now();
       const elapsed = now - lastUpdateTime;
       
       if (currentProgress < targetProgress && elapsed > MIN_UPDATE_INTERVAL) {
+        // Calculate step based on how far we need to go
         const remaining = targetProgress - currentProgress;
-        const step = Math.max(1, Math.min(4, Math.ceil(remaining / 12)));
+        const step = Math.max(1, Math.min(5, Math.ceil(remaining / 10)));
         
         currentProgress += step;
         updateCircleProgress(currentProgress);
         lastUpdateTime = now;
         
+        // Continue animating if not at target
         if (currentProgress < targetProgress) {
           setTimeout(animateProgress, MIN_UPDATE_INTERVAL);
         }
       }
     }
     
+    // Update circular progress with smoother animation
     function updateCircleProgress(percent) {
       const degrees = (percent / 100) * 360;
       const fixedPercent = Math.min(100, Math.max(0, percent));
       
+      // Update conic-gradient background with smoother transition
       progressCircle.style.transition = `background ${ANIMATION_DURATION}ms cubic-bezier(0.34, 1.56, 0.64, 1)`;
       progressCircle.style.background = `
         conic-gradient(
@@ -513,73 +407,66 @@
         )
       `;
       
-      progressText.style.transition = `all 0.6s cubic-bezier(0.4, 0, 0.2, 1)`;
+      // Update percentage text with count-up effect
+      progressText.style.transition = `opacity 0.5s ease, transform 0.5s ease`;
       progressText.textContent = `${Math.round(fixedPercent)}%`;
       
-      progressText.style.transform = `translate(-50%, -50%) scale(1.1)`;
-      setTimeout(() => {
-        progressText.style.transform = `translate(-50%, -50%) scale(1)`;
-      }, 300);
-      
+      // Hide text at 100%
       if (fixedPercent === 100) {
         setTimeout(() => {
           progressText.classList.add('hidden');
-          progressCircle.classList.add('complete');
-          statusCard.classList.add('status-complete');
-          statusCard.classList.remove('status-updating');
-        }, 800);
+        }, 500);
+        progressCircle.classList.add('complete');
       } else {
         progressText.classList.remove('hidden');
         progressCircle.classList.remove('complete');
-        statusCard.classList.add('status-updating');
-        statusCard.classList.remove('status-complete');
       }
       
-      if (fixedPercent === 25 || fixedPercent === 50 || fixedPercent === 75 || fixedPercent === 100) {
+      // Subtle pulse animation at milestones (but slower)
+      if (fixedPercent === 25 || fixedPercent === 50 || fixedPercent === 75) {
         setTimeout(() => {
-          progressCircle.style.transform = 'scale(1.03)';
+          progressCircle.style.transform = 'scale(1.05)';
           setTimeout(() => {
             progressCircle.style.transform = 'scale(1)';
-          }, 500);
-        }, 300);
+          }, 400); // Longer pulse duration
+        }, 200);
       }
     }
     
+    // Status updates with slower, more readable transitions
     ipcRenderer.on('status', (event, message) => {
-      statusCard.style.transition = 'all 0.6s ease';
-      statusCard.style.opacity = '0.7';
-      statusCard.style.transform = 'translateY(5px)';
+      // Add slower fade out transition
+      statusEl.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+      statusEl.style.opacity = '0.3';
+      statusEl.style.transform = 'translateY(-8px)';
       
       setTimeout(() => {
+        // Update content
         statusEl.textContent = message;
         
-        statusCard.classList.remove('status-updating', 'status-complete', 'status-error');
-        
+        // Add status type classes
+        statusEl.classList.remove('updated', 'error', 'status-transition');
         if (message.toLowerCase().includes('complete') || 
             message.toLowerCase().includes('success') ||
             message.toLowerCase().includes('latest version') ||
             message.toLowerCase().includes('ready')) {
           statusEl.classList.add('updated');
-          statusEl.classList.remove('error');
-          statusCard.classList.add('status-complete');
         } else if (message.toLowerCase().includes('error') || 
                    message.toLowerCase().includes('failed') ||
-                   message.toLowerCase().includes('fail')) {
+                   message.toLowerCase().includes('failed')) {
           statusEl.classList.add('error');
-          statusEl.classList.remove('updated');
-          statusCard.classList.add('status-error');
-        } else {
-          statusEl.classList.remove('updated', 'error');
-          statusCard.classList.add('status-updating');
         }
         
+        // Add loading dots for ongoing processes (with better timing)
         if (!message.toLowerCase().includes('complete') && 
             !message.toLowerCase().includes('success') &&
             !message.toLowerCase().includes('latest version') &&
             !message.toLowerCase().includes('ready') &&
             !message.toLowerCase().includes('error') &&
-            !message.toLowerCase().includes('failed')) {
+            !message.toLowerCase().includes('failed') &&
+            !message.toLowerCase().includes('starting')) {
           
+          // Clear and add new content with dots
           statusEl.innerHTML = '';
           statusEl.appendChild(document.createTextNode(message));
           
@@ -591,89 +478,131 @@
           }
           statusEl.appendChild(dotsContainer);
         } else {
+          // Clear any existing dots
           statusEl.innerHTML = message;
         }
         
+        // Add class for transition effects
+        statusEl.classList.add('status-transition');
+        
+        // Slower fade in with animation
         setTimeout(() => {
-          statusCard.style.transition = 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
-          statusCard.style.opacity = '1';
-          statusCard.style.transform = 'translateY(0)';
+          statusEl.style.transition = 'opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+          statusEl.style.opacity = '1';
+          statusEl.style.transform = 'translateY(0)';
         }, 50);
         
+        // Check if app is starting
         if (message.toLowerCase().includes('starting app')) {
+          // Complete the circle animation smoothly
           setTimeout(() => {
             targetProgress = 100;
             animateProgress();
-          }, 1000);
+          }, 800);
           
-          statusCard.classList.add('status-complete');
-          
+          // Hide spinner when complete
           setTimeout(() => {
-            spinnerRing.style.transition = 'opacity 1s ease';
-            spinnerRing.style.opacity = '0';
-          }, 1800);
+            spinner.style.transition = 'opacity 0.8s ease';
+            spinner.style.opacity = '0';
+          }, 1500);
           
+          // Start exit animation with delay so user can read message
           setTimeout(() => {
             document.body.classList.add('finishing');
+            // Notify main process that splash is done
             setTimeout(() => {
               ipcRenderer.send('splash-complete');
-            }, 1400);
-          }, 3000);
+            }, 1200);
+          }, 2500); // Longer delay before closing
         }
-      }, 400);
+        
+        // Re-check screen fitting after status update
+        setTimeout(fitToScreen, 100);
+      }, 600); // Longer delay before showing new text
     });
     
+    // Progress updates with smoother percentage tracking
     ipcRenderer.on('progress', (event, percent) => {
       targetProgress = Math.min(100, Math.max(0, percent));
       
+      // Only start animation if not already animating
       if (currentProgress === 0 || currentProgress >= targetProgress) {
         currentProgress = targetProgress;
         updateCircleProgress(currentProgress);
       } else {
+        // Start smooth animation to target
         animateProgress();
       }
     });
     
+    // Handle errors with slower animations
     ipcRenderer.on('error', (event, errorMessage) => {
       statusEl.textContent = errorMessage;
-      statusEl.classList.add('error');
-      statusCard.classList.add('status-error');
+      statusEl.classList.add('error', 'status-transition');
       
+      // Change circle to error state with transition
       setTimeout(() => {
-        progressCircle.style.transition = 'background 1.2s ease';
+        progressCircle.style.transition = 'background 1s ease';
         progressCircle.style.background = `
           conic-gradient(
-            #ef4444 0deg,
-            #ef4444 360deg
+            #f87171 0deg,
+            #f87171 360deg
           )
         `;
         
-        spinnerRing.style.transition = 'opacity 0.8s ease, animation-play-state 0.8s ease';
-        spinnerRing.style.opacity = '0.5';
-        spinnerRing.style.animationPlayState = 'paused';
+        // Stop spinner slowly
+        spinner.style.transition = 'opacity 0.8s ease, animation-play-state 0.8s ease';
+        spinner.style.opacity = '0.5';
+        spinner.style.animationPlayState = 'paused';
       }, 300);
       
+      // Slower pulse for error state
       const pulseError = () => {
         setTimeout(() => {
-          progressCircle.style.transform = 'scale(1.03)';
+          progressCircle.style.transform = 'scale(1.05)';
           setTimeout(() => {
             progressCircle.style.transform = 'scale(1)';
-            setTimeout(pulseError, 1800);
-          }, 800);
-        }, 400);
+            setTimeout(pulseError, 1500); // Longer interval
+          }, 600);
+        }, 300);
       };
       pulseError();
     });
     
+    // Ensure everything fits on screen
+    function fitToScreen() {
+      const container = document.querySelector('.container');
+      const body = document.body;
+      const windowHeight = window.innerHeight;
+      const windowWidth = window.innerWidth;
+      
+      const containerHeight = container.scrollHeight;
+      const maxAllowedHeight = windowHeight * 0.9;
+      
+      if (containerHeight > maxAllowedHeight) {
+        const scale = maxAllowedHeight / containerHeight;
+        container.style.transform = `translateY(0) scale(${Math.min(scale, 1)})`;
+        container.style.transition = 'transform 0.8s ease';
+      }
+    }
+    
+    // Initial animation sequence with slower timing
     window.addEventListener('load', () => {
+      // Start with 0% progress
       currentProgress = 0;
       targetProgress = 0;
       updateCircleProgress(0);
       
+      // Initial status with dots
       setTimeout(() => {
-        statusCard.classList.add('status-updating');
         statusEl.innerHTML = 'Checking for updates<span class="loading-dots"><span></span><span></span><span></span></span>';
-      }, 1200);
+      }, 1000);
+      
+      // Fit content to screen after animations
+      setTimeout(fitToScreen, 1500);
+      
+      // Also fit on window resize
+      window.addEventListener('resize', fitToScreen);
     });
   </script>
 </body>
