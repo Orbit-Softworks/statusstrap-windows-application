@@ -12,13 +12,11 @@ const APP_CONFIG = {
   APP_VERSION: app.getVersion() || '1.0.2'
 };
 
-// === EXTREME SECURITY MEASURES ===
 function applyExtremeSecurity(window) {
   if (!window || window.isDestroyed()) return;
   
   console.log('Applying security measures to window');
   
-  // 1. Remove all menus
   try {
     Menu.setApplicationMenu(null);
     window.setMenu(null);
@@ -26,11 +24,9 @@ function applyExtremeSecurity(window) {
     console.log('Menu removal error:', e.message);
   }
   
-  // 2. Disable ALL dev tools
   try {
     window.webContents.closeDevTools();
     
-    // Try to prevent dev tools opening
     window.webContents.on('devtools-opened', () => {
       console.log('DevTools opened event - closing');
       window.webContents.closeDevTools();
@@ -44,9 +40,7 @@ function applyExtremeSecurity(window) {
     console.log('DevTools disabling error:', e.message);
   }
   
-  // 3. Block devtools-related shortcuts individually
   try {
-    // Register each shortcut individually
     const shortcuts = [
       'F12',
       'CommandOrControl+Shift+I',
@@ -77,10 +71,8 @@ function applyExtremeSecurity(window) {
     console.log('Global shortcut error:', e.message);
   }
   
-  // 4. Block input at window level
   window.webContents.on('before-input-event', (event, input) => {
     try {
-      // Block ALL function keys F1-F12
       if (input.key && input.key.startsWith('F')) {
         const fnNum = parseInt(input.key.substring(1));
         if (!isNaN(fnNum) && fnNum >= 1 && fnNum <= 12) {
@@ -89,7 +81,6 @@ function applyExtremeSecurity(window) {
         }
       }
       
-      // Block ALL Ctrl/Cmd+Shift+[Key] combinations
       if ((input.control || input.meta) && input.shift && input.key) {
         const blockedKeys = ['I', 'J', 'C', 'K', 'U', 'R', 'S', 'D'];
         if (blockedKeys.includes(input.key.toUpperCase())) {
@@ -98,28 +89,23 @@ function applyExtremeSecurity(window) {
         }
       }
       
-      // Block Ctrl/Cmd+U (view source)
       if ((input.control || input.meta) && input.key && input.key.toUpperCase() === 'U' && !input.shift) {
         event.preventDefault();
         return;
       }
       
-      // Block Alt+Menu
       if (input.alt && input.key === 'Menu') {
         event.preventDefault();
         return;
       }
     } catch (e) {
-      // Silently fail on input blocking errors
     }
   });
   
-  // 5. Disable right-click
   window.webContents.on('context-menu', (event) => {
     event.preventDefault();
   });
   
-  // 6. Block navigation to devtools
   window.webContents.on('will-navigate', (event, url) => {
     if (url.includes('chrome-devtools://') || 
         url.includes('devtools://') || 
@@ -129,7 +115,6 @@ function applyExtremeSecurity(window) {
     }
   });
   
-  // 7. Block any new windows that might be devtools
   window.webContents.setWindowOpenHandler(({ url }) => {
     if (url.includes('chrome-devtools://') || 
         url.includes('devtools://') || 
@@ -137,7 +122,6 @@ function applyExtremeSecurity(window) {
       return { action: 'deny' };
     }
     
-    // Allow your specific domains
     if (url.includes('eiuyrqweptwoeihfdsjkcbnaadjxblfskjdhvndsbflav.vercel.app') || url.includes('github.com')) {
       return { action: 'allow' };
     }
@@ -145,7 +129,6 @@ function applyExtremeSecurity(window) {
     return { action: 'deny' };
   });
   
-  // 8. Periodic devtools check (every 5 seconds)
   if (securityCheckInterval) {
     clearInterval(securityCheckInterval);
   }
@@ -153,11 +136,9 @@ function applyExtremeSecurity(window) {
   securityCheckInterval = setInterval(() => {
     try {
       if (window && !window.isDestroyed()) {
-        // Force close devtools if somehow opened
         window.webContents.closeDevTools();
       }
     } catch (e) {
-      // Ignore interval errors
     }
   }, 5000);
 }
@@ -181,7 +162,6 @@ function createSplash() {
     }
   });
   
-  // Apply security to splash window
   applyExtremeSecurity(splashWindow);
   
   splashWindow.loadFile('splash.html');
@@ -256,7 +236,6 @@ async function createMainWindow() {
     }
   });
   
-  // Apply security to main window
   applyExtremeSecurity(mainWindow);
   
   mainWindow.webContents.setUserAgent(`StatusStrap-App/${APP_CONFIG.APP_VERSION} Electron/${process.versions.electron}`);
@@ -614,14 +593,12 @@ app.on('ready', () => {
 });
 
 app.on('window-all-closed', () => {
-  // Clean up global shortcuts
   try {
     globalShortcut.unregisterAll();
   } catch (e) {
     console.log('Error unregistering shortcuts:', e.message);
   }
   
-  // Clear interval
   if (securityCheckInterval) {
     clearInterval(securityCheckInterval);
   }
@@ -630,7 +607,6 @@ app.on('window-all-closed', () => {
 });
 
 app.on('will-quit', () => {
-  // Clean up
   try {
     globalShortcut.unregisterAll();
   } catch (e) {
