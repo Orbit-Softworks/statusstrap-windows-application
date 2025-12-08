@@ -396,34 +396,29 @@
   <script>
     const { ipcRenderer } = require('electron');
     
-    // Get and display version
     const version = ipcRenderer.sendSync('get-version');
     document.getElementById('version').textContent = `v${version}`;
     
-    // DOM elements
     const progressCircle = document.getElementById('progressCircle');
     const progressText = document.getElementById('progressText');
     const statusEl = document.getElementById('status');
     const spinner = document.querySelector('.spinner');
     const appTitle = document.getElementById('appTitle');
     
-    // Ensure everything fits on screen
     function fitToScreen() {
       const container = document.querySelector('.container');
       const body = document.body;
       const windowHeight = window.innerHeight;
       const windowWidth = window.innerWidth;
       
-      // Check if content is too tall
       const containerHeight = container.scrollHeight;
-      const maxAllowedHeight = windowHeight * 0.9; // 90% of window height
+      const maxAllowedHeight = windowHeight * 0.9;
       
       if (containerHeight > maxAllowedHeight) {
         const scale = maxAllowedHeight / containerHeight;
         container.style.transform = `translateY(0) scale(${Math.min(scale, 1)})`;
       }
       
-      // Check if content is too wide
       const containerWidth = container.scrollWidth;
       const maxAllowedWidth = windowWidth * 0.9;
       
@@ -432,7 +427,6 @@
         container.style.transform = `translateY(0) scale(${Math.min(scale, container.style.transform ? parseFloat(container.style.transform.split('scale(')[1]) : 1)})`;
       }
       
-      // Adjust font sizes if needed
       if (windowHeight < 600) {
         appTitle.style.fontSize = 'clamp(1.5rem, 6vw, 2rem)';
         progressText.style.fontSize = 'clamp(0.9rem, 3vw, 1.2rem)';
@@ -440,12 +434,10 @@
       }
     }
     
-    // Update circular progress
     function updateCircleProgress(percent) {
       const degrees = (percent / 100) * 360;
       const fixedPercent = Math.min(100, Math.max(0, percent));
       
-      // Update conic-gradient background
       progressCircle.style.background = `
         conic-gradient(
           var(--progress-fill) 0deg,
@@ -455,10 +447,8 @@
         )
       `;
       
-      // Update percentage text
       progressText.textContent = `${Math.round(fixedPercent)}%`;
       
-      // Hide text at 100%
       if (fixedPercent === 100) {
         progressText.classList.add('hidden');
         progressCircle.classList.add('complete');
@@ -467,7 +457,6 @@
         progressCircle.classList.remove('complete');
       }
       
-      // Pulse animation at certain milestones
       if (fixedPercent === 25 || fixedPercent === 50 || fixedPercent === 75) {
         progressCircle.style.transform = 'scale(1.05)';
         setTimeout(() => {
@@ -476,18 +465,14 @@
       }
     }
     
-    // Status updates with smooth transitions
     ipcRenderer.on('status', (event, message) => {
-      // Add fade out transition
       statusEl.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
       statusEl.style.opacity = '0';
       statusEl.style.transform = 'translateY(-10px)';
       
       setTimeout(() => {
-        // Update content
         statusEl.textContent = message;
         
-        // Add status type classes
         statusEl.classList.remove('updated', 'error');
         if (message.toLowerCase().includes('complete') || 
             message.toLowerCase().includes('success') ||
@@ -498,14 +483,12 @@
           statusEl.classList.add('error');
         }
         
-        // Add loading dots for ongoing processes
         if (!message.toLowerCase().includes('complete') && 
             !message.toLowerCase().includes('success') &&
             !message.toLowerCase().includes('latest version') &&
             !message.toLowerCase().includes('error') &&
             !message.toLowerCase().includes('failed') &&
             !message.toLowerCase().includes('starting')) {
-          // Create dots properly aligned with text
           const dotsContainer = document.createElement('span');
           dotsContainer.className = 'loading-dots';
           for (let i = 0; i < 3; i++) {
@@ -513,59 +496,47 @@
             dotsContainer.appendChild(dot);
           }
           
-          // Clear and add new content
           statusEl.innerHTML = '';
           statusEl.appendChild(document.createTextNode(message));
           statusEl.appendChild(dotsContainer);
         } else {
-          // Clear any existing dots
           statusEl.innerHTML = message;
         }
         
-        // Fade in with animation
         statusEl.style.transition = 'opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
         setTimeout(() => {
           statusEl.style.opacity = '1';
           statusEl.style.transform = 'translateY(0)';
         }, 10);
         
-        // Check if app is starting
         if (message.toLowerCase().includes('starting app')) {
-          // Complete the circle animation
           updateCircleProgress(100);
           
-          // Hide spinner when complete
           setTimeout(() => {
             spinner.style.opacity = '0';
             spinner.style.transition = 'opacity 0.5s ease';
           }, 300);
           
-          // Start exit animation
           setTimeout(() => {
             document.body.classList.add('finishing');
-            // Notify main process that splash is done
             setTimeout(() => {
               ipcRenderer.send('splash-complete');
             }, 800);
           }, 1500);
         }
         
-        // Re-check screen fitting after status update
         setTimeout(fitToScreen, 100);
       }, 300);
     });
     
-    // Progress updates with circular fill
     ipcRenderer.on('progress', (event, percent) => {
       updateCircleProgress(percent);
     });
     
-    // Handle errors
     ipcRenderer.on('error', (event, errorMessage) => {
       statusEl.textContent = errorMessage;
       statusEl.classList.add('error');
       
-      // Change circle to error state (red fill)
       progressCircle.style.background = `
         conic-gradient(
           #f87171 0deg,
@@ -573,10 +544,8 @@
         )
       `;
       
-      // Stop spinner
       spinner.style.animationPlayState = 'paused';
       
-      // Pulse error state
       const pulse = () => {
         progressCircle.style.transform = 'scale(1.05)';
         setTimeout(() => {
@@ -587,15 +556,11 @@
       pulse();
     });
     
-    // Initial animation sequence
     window.addEventListener('load', () => {
-      // Start with 0% progress
       updateCircleProgress(0);
       
-      // Fit content to screen
       fitToScreen();
       
-      // Also fit on window resize
       window.addEventListener('resize', fitToScreen);
     });
   </script>
