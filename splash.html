@@ -2,7 +2,22 @@
 <html>
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
+    :root {
+      --primary-color: #ffffff;
+      --secondary-color: #888888;
+      --bg-color: #000000;
+      --progress-track: #222222;
+      --progress-fill: #ffffff;
+      --accent-glow: rgba(255, 255, 255, 0.15);
+      --transition-speed: 0.4s;
+      --spacing-sm: 8px;
+      --spacing-md: 16px;
+      --spacing-lg: 24px;
+      --spacing-xl: 32px;
+    }
+
     * {
       margin: 0;
       padding: 0;
@@ -11,9 +26,9 @@
 
     body {
       margin: 0;
-      background: #000;
-      color: white;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg-color);
+      color: var(--primary-color);
+      font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -21,58 +36,214 @@
       text-align: center;
       overflow: hidden;
       opacity: 0;
-      animation: fadeIn 0.8s ease-out forwards;
+      animation: fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+      user-select: none;
     }
 
     @keyframes fadeIn {
       to { opacity: 1; }
     }
 
-    .container { 
-      padding: 20px;
-      transform: scale(0.95);
-      animation: scaleIn 0.6s ease-out 0.4s forwards;
+    .container {
+      padding: var(--spacing-xl);
+      max-width: 480px;
+      width: 90%;
+      position: relative;
+      transform: translateY(20px);
+      animation: slideUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.2s forwards;
     }
 
-    @keyframes scaleIn {
-      to { transform: scale(1); }
-    }
-
-    h1 { 
-      margin-bottom: 10px;
-      font-size: 48px;
-      font-weight: 600;
-      letter-spacing: 2px;
-      opacity: 0;
-      animation: slideDown 0.7s ease-out 0.6s forwards;
-    }
-
-    @keyframes slideDown {
-      from {
-        opacity: 0;
-        transform: translateY(-30px);
+    @keyframes slideUp {
+      to {
+        transform: translateY(0);
       }
+    }
+
+    .logo-container {
+      margin-bottom: var(--spacing-xl);
+      position: relative;
+    }
+
+    h1 {
+      font-size: 3.5rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: var(--spacing-sm);
+      opacity: 0;
+      transform: translateY(-15px);
+      animation: textReveal 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.4s forwards;
+      position: relative;
+      display: inline-block;
+    }
+
+    h1::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 25%;
+      width: 50%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
+      transform: scaleX(0);
+      animation: lineExpand 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.8s forwards;
+    }
+
+    @keyframes textReveal {
       to {
         opacity: 1;
         transform: translateY(0);
       }
     }
 
-    #version {
-      font-size: 14px;
-      opacity: 0.7;
-      margin-bottom: 30px;
-      opacity: 0;
-      animation: fadeInUp 0.6s ease-out 0.8s forwards;
+    @keyframes lineExpand {
+      to {
+        transform: scaleX(1);
+      }
     }
 
-    #status { 
-      margin: 20px 0;
-      min-height: 24px;
-      font-size: 16px;
+    #version {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--secondary-color);
+      margin-bottom: var(--spacing-xl);
       opacity: 0;
-      animation: fadeInUp 0.6s ease-out 1s forwards;
-      transition: opacity 0.5s ease, transform 0.5s ease;
+      animation: fadeInUp 0.5s ease-out 0.8s forwards;
+      letter-spacing: 0.5px;
+    }
+
+    .status-container {
+      position: relative;
+      margin: var(--spacing-xl) 0;
+      min-height: 28px;
+    }
+
+    #status {
+      font-size: 1rem;
+      font-weight: 500;
+      transition: all var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
+      position: absolute;
+      width: 100%;
+      opacity: 0;
+      transform: translateY(10px);
+      animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) 1s forwards;
+    }
+
+    #status.updated {
+      color: #4ade80;
+    }
+
+    #status.error {
+      color: #f87171;
+    }
+
+    .progress-circle-container {
+      width: 120px;
+      height: 120px;
+      margin: var(--spacing-xl) auto;
+      position: relative;
+      opacity: 0;
+      animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) 1.2s forwards;
+    }
+
+    .progress-circle-bg {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: conic-gradient(
+        var(--progress-fill) 0deg,
+        var(--progress-track) 0deg
+      );
+      position: relative;
+      box-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
+      transition: background 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .progress-circle-bg::before {
+      content: '';
+      position: absolute;
+      width: 90%;
+      height: 90%;
+      background: var(--bg-color);
+      border-radius: 50%;
+      top: 5%;
+      left: 5%;
+      z-index: 1;
+    }
+
+    .progress-circle-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--primary-color);
+      z-index: 2;
+      opacity: 0.9;
+      transition: all 0.3s ease;
+    }
+
+    .progress-circle-text.hidden {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.8);
+    }
+
+    .spinner {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 3px solid transparent;
+      border-top-color: var(--primary-color);
+      animation: spin 1.5s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
+      z-index: 2;
+    }
+
+    .spinner::after {
+      content: '';
+      position: absolute;
+      top: -3px;
+      left: -3px;
+      right: -3px;
+      bottom: -3px;
+      border: 3px solid transparent;
+      border-radius: 50%;
+      border-right-color: var(--accent-glow);
+      animation: spin 2s linear infinite reverse;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .progress-circle-bg.complete {
+      animation: pulseComplete 1s ease;
+    }
+
+    @keyframes pulseComplete {
+      0%, 100% { 
+        box-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
+      }
+      50% { 
+        box-shadow: 0 0 50px rgba(255, 255, 255, 0.3);
+      }
+    }
+
+    .finishing {
+      animation: fadeOut 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+
+    @keyframes fadeOut {
+      to {
+        opacity: 0;
+        transform: scale(0.98);
+      }
     }
 
     @keyframes fadeInUp {
@@ -86,89 +257,262 @@
       }
     }
 
-    .progress {
-      width: 300px;
+    /* Dot animation for loading states */
+    .loading-dots {
+      display: inline-block;
+      position: relative;
+      width: 20px;
+      height: 20px;
+      margin-left: 5px;
+    }
+
+    .loading-dots span {
+      position: absolute;
+      width: 4px;
       height: 4px;
-      background: #333;
-      margin: 20px auto;
-      border-radius: 2px;
-      overflow: hidden;
-      opacity: 0;
-      animation: fadeInUp 0.6s ease-out 1.2s forwards;
-    }
-
-    .progress-bar {
-      height: 100%;
-      background: white;
-      width: 0%;
-      transition: width 0.5s ease;
-      border-radius: 2px;
-    }
-
-    .spinner {
-      width: 35px;
-      height: 35px;
-      margin: 25px auto 0;
-      border: 3px solid #333;
-      border-top-color: white;
+      background: currentColor;
       border-radius: 50%;
-      animation: spin 1s linear infinite, fadeInUp 0.6s ease-out 1.4s forwards;
-      opacity: 0;
+      animation: dots 1.4s infinite ease-in-out both;
     }
 
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+    .loading-dots span:nth-child(1) {
+      left: 0;
+      animation-delay: -0.32s;
     }
 
-    body.finishing {
-      animation: fadeOutShrink 1.2s ease-in-out forwards;
+    .loading-dots span:nth-child(2) {
+      left: 8px;
+      animation-delay: -0.16s;
     }
 
-    @keyframes fadeOutShrink {
-      to {
-        opacity: 0;
-        transform: scale(0.95);
+    .loading-dots span:nth-child(3) {
+      left: 16px;
+    }
+
+    @keyframes dots {
+      0%, 80%, 100% { 
+        transform: scale(0);
+      }
+      40% { 
+        transform: scale(1.0);
+      }
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 480px) {
+      .container {
+        padding: var(--spacing-md);
+      }
+      
+      h1 {
+        font-size: 2.5rem;
+      }
+      
+      #status {
+        font-size: 0.9rem;
+      }
+      
+      .progress-circle-container {
+        width: 100px;
+        height: 100px;
+      }
+      
+      .progress-circle-text {
+        font-size: 1.2rem;
+      }
+    }
+
+    @media (min-width: 1200px) {
+      .container {
+        max-width: 520px;
+      }
+      
+      h1 {
+        font-size: 4rem;
+      }
+      
+      .progress-circle-container {
+        width: 140px;
+        height: 140px;
+      }
+      
+      .progress-circle-text {
+        font-size: 1.8rem;
       }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>StatusStrap</h1>
-    <div id="version">v1.0.0</div>
-    <div id="status">Loading...</div>
-    <div class="progress">
-      <div class="progress-bar" id="progress"></div>
+    <div class="logo-container">
+      <h1>StatusStrap</h1>
+      <div id="version">v1.0.0</div>
     </div>
-    <div class="spinner"></div>
+    
+    <div class="progress-circle-container">
+      <div class="progress-circle-bg" id="progressCircle"></div>
+      <div class="progress-circle-text" id="progressText">0%</div>
+      <div class="spinner"></div>
+    </div>
+    
+    <div class="status-container">
+      <div id="status">Initializing<span class="loading-dots"><span></span><span></span><span></span></span></div>
+    </div>
   </div>
   
   <script>
     const { ipcRenderer } = require('electron');
     
+    // Get and display version
     const version = ipcRenderer.sendSync('get-version');
     document.getElementById('version').textContent = `v${version}`;
     
+    // DOM elements
+    const progressCircle = document.getElementById('progressCircle');
+    const progressText = document.getElementById('progressText');
+    const statusEl = document.getElementById('status');
+    const spinner = document.querySelector('.spinner');
+    
+    // Status updates with smooth transitions
     ipcRenderer.on('status', (event, message) => {
-      const statusEl = document.getElementById('status');
+      // Add fade out transition
+      statusEl.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
       statusEl.style.opacity = '0';
-      statusEl.style.transform = 'translateY(10px)';
+      statusEl.style.transform = 'translateY(-10px)';
       
       setTimeout(() => {
+        // Update content
         statusEl.textContent = message;
-        statusEl.style.opacity = '1';
-        statusEl.style.transform = 'translateY(0)';
         
+        // Add status type classes
+        statusEl.classList.remove('updated', 'error');
+        if (message.toLowerCase().includes('complete') || 
+            message.toLowerCase().includes('success')) {
+          statusEl.classList.add('updated');
+        } else if (message.toLowerCase().includes('error') || 
+                   message.toLowerCase().includes('failed')) {
+          statusEl.classList.add('error');
+        }
+        
+        // Add loading dots for ongoing processes
+        if (!message.toLowerCase().includes('complete') && 
+            !message.toLowerCase().includes('error') &&
+            !message.toLowerCase().includes('starting')) {
+          const dotsHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
+          statusEl.innerHTML = message + dotsHTML;
+        }
+        
+        // Fade in with animation
+        statusEl.style.transition = 'opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+        setTimeout(() => {
+          statusEl.style.opacity = '1';
+          statusEl.style.transform = 'translateY(0)';
+        }, 10);
+        
+        // Check if app is starting
         if (message.toLowerCase().includes('starting app')) {
+          // Complete the circle animation
+          updateCircleProgress(100);
+          
+          // Hide spinner when complete
+          setTimeout(() => {
+            spinner.style.opacity = '0';
+            spinner.style.transition = 'opacity 0.5s ease';
+          }, 300);
+          
+          // Start exit animation
           setTimeout(() => {
             document.body.classList.add('finishing');
+            // Notify main process that splash is done
+            setTimeout(() => {
+              ipcRenderer.send('splash-complete');
+            }, 800);
           }, 1500);
         }
       }, 300);
     });
     
+    // Progress updates with circular fill
     ipcRenderer.on('progress', (event, percent) => {
-      document.getElementById('progress').style.width = percent + '%';
+      updateCircleProgress(percent);
+    });
+    
+    // Update circular progress
+    function updateCircleProgress(percent) {
+      const degrees = (percent / 100) * 360;
+      const fixedPercent = Math.min(100, Math.max(0, percent));
+      
+      // Update conic-gradient background
+      progressCircle.style.background = `
+        conic-gradient(
+          var(--progress-fill) 0deg,
+          var(--progress-fill) ${degrees}deg,
+          var(--progress-track) ${degrees}deg,
+          var(--progress-track) 360deg
+        )
+      `;
+      
+      // Update percentage text
+      progressText.textContent = `${Math.round(fixedPercent)}%`;
+      
+      // Hide text at 100%
+      if (fixedPercent === 100) {
+        progressText.classList.add('hidden');
+        progressCircle.classList.add('complete');
+      } else {
+        progressText.classList.remove('hidden');
+        progressCircle.classList.remove('complete');
+      }
+      
+      // Pulse animation at certain milestones
+      if (fixedPercent === 25 || fixedPercent === 50 || fixedPercent === 75) {
+        progressCircle.style.transform = 'scale(1.05)';
+        setTimeout(() => {
+          progressCircle.style.transform = 'scale(1)';
+        }, 300);
+      }
+    }
+    
+    // Handle errors
+    ipcRenderer.on('error', (event, errorMessage) => {
+      statusEl.textContent = errorMessage;
+      statusEl.classList.add('error');
+      
+      // Change circle to error state (red fill)
+      progressCircle.style.background = `
+        conic-gradient(
+          #f87171 0deg,
+          #f87171 360deg
+        )
+      `;
+      
+      // Stop spinner
+      spinner.style.animationPlayState = 'paused';
+      
+      // Pulse error state
+      const pulse = () => {
+        progressCircle.style.transform = 'scale(1.05)';
+        setTimeout(() => {
+          progressCircle.style.transform = 'scale(1)';
+          setTimeout(pulse, 1000);
+        }, 500);
+      };
+      pulse();
+    });
+    
+    // Initial animation sequence
+    window.addEventListener('load', () => {
+      // Start with 0% progress
+      updateCircleProgress(0);
+      
+      // Add a subtle breathing effect to the container
+      setInterval(() => {
+        const container = document.querySelector('.container');
+        container.style.transform = 'translateY(-1px)';
+        setTimeout(() => {
+          container.style.transform = 'translateY(0)';
+        }, 1000);
+      }, 2000);
     });
   </script>
 </body>
