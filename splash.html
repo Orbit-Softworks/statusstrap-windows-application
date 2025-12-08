@@ -12,10 +12,6 @@
       --progress-fill: #ffffff;
       --accent-glow: rgba(255, 255, 255, 0.15);
       --transition-speed: 0.4s;
-      --spacing-sm: 8px;
-      --spacing-md: 16px;
-      --spacing-lg: 24px;
-      --spacing-xl: 32px;
     }
 
     * {
@@ -38,6 +34,7 @@
       opacity: 0;
       animation: fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
       user-select: none;
+      padding: 20px;
     }
 
     @keyframes fadeIn {
@@ -45,15 +42,15 @@
     }
 
     .container {
-      padding: var(--spacing-xl);
-      max-width: 480px;
-      width: 90%;
-      position: relative;
-      transform: translateY(20px);
-      animation: slideUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.2s forwards;
+      width: 100%;
+      max-width: 400px;
       display: flex;
       flex-direction: column;
       align-items: center;
+      gap: 20px;
+      position: relative;
+      transform: translateY(20px);
+      animation: slideUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.2s forwards;
     }
 
     @keyframes slideUp {
@@ -63,25 +60,24 @@
     }
 
     .logo-container {
-      margin-bottom: var(--spacing-xl);
       text-align: center;
       width: 100%;
     }
 
     h1 {
-      font-size: 3.5rem;
+      font-size: clamp(2rem, 8vw, 3rem);
       font-weight: 700;
-      letter-spacing: 1.5px;
+      letter-spacing: 1px;
       background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-      margin-bottom: var(--spacing-sm);
+      margin-bottom: 8px;
       opacity: 0;
       transform: translateY(-15px);
       animation: textReveal 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.4s forwards;
       position: relative;
-      display: inline-block;
+      line-height: 1.2;
     }
 
     h1::after {
@@ -110,19 +106,18 @@
     }
 
     #version {
-      font-size: 0.875rem;
+      font-size: clamp(0.75rem, 3vw, 0.875rem);
       font-weight: 500;
       color: var(--secondary-color);
-      margin-bottom: var(--spacing-xl);
       opacity: 0;
       animation: fadeInUp 0.5s ease-out 0.8s forwards;
       letter-spacing: 0.5px;
     }
 
     .progress-circle-container {
-      width: 120px;
-      height: 120px;
-      margin: var(--spacing-lg) auto var(--spacing-xl) auto;
+      width: clamp(80px, 25vw, 120px);
+      height: clamp(80px, 25vw, 120px);
+      margin: 10px 0;
       position: relative;
       opacity: 0;
       animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) 1.2s forwards;
@@ -137,7 +132,7 @@
         var(--progress-track) 360deg
       );
       position: relative;
-      box-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
       transition: background 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
@@ -158,7 +153,7 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      font-size: 1.5rem;
+      font-size: clamp(1rem, 4vw, 1.5rem);
       font-weight: 600;
       color: var(--primary-color);
       z-index: 2;
@@ -178,23 +173,10 @@
       width: 100%;
       height: 100%;
       border-radius: 50%;
-      border: 3px solid transparent;
+      border: 2px solid transparent;
       border-top-color: var(--primary-color);
       animation: spin 1.5s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
       z-index: 2;
-    }
-
-    .spinner::after {
-      content: '';
-      position: absolute;
-      top: -3px;
-      left: -3px;
-      right: -3px;
-      bottom: -3px;
-      border: 3px solid transparent;
-      border-radius: 50%;
-      border-right-color: var(--accent-glow);
-      animation: spin 2s linear infinite reverse;
     }
 
     @keyframes spin {
@@ -202,17 +184,16 @@
     }
 
     .status-container {
-      position: relative;
-      margin-top: var(--spacing-lg);
-      min-height: 28px;
       width: 100%;
+      min-height: 24px;
       display: flex;
       justify-content: center;
       align-items: center;
+      margin-top: 10px;
     }
 
     #status {
-      font-size: 1rem;
+      font-size: clamp(0.875rem, 3.5vw, 1rem);
       font-weight: 500;
       transition: all var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
       opacity: 0;
@@ -222,6 +203,10 @@
       align-items: center;
       justify-content: center;
       gap: 4px;
+      line-height: 1.4;
+      text-align: center;
+      max-width: 100%;
+      overflow-wrap: break-word;
     }
 
     #status.updated {
@@ -235,22 +220,21 @@
     /* Fixed loading dots alignment */
     .loading-dots {
       display: inline-flex;
-      align-items: flex-end; /* Changed to align at bottom */
+      align-items: flex-end;
       height: 1em;
       margin-left: 4px;
     }
 
     .loading-dots span {
-      width: 4px;
-      height: 4px;
+      width: 3px;
+      height: 3px;
       background: currentColor;
       border-radius: 50%;
       animation: dots 1.4s infinite ease-in-out both;
       margin: 0 1px;
-      vertical-align: baseline; /* Align with text baseline */
       display: inline-block;
       position: relative;
-      bottom: -0.1em; /* Adjust this to perfectly align with text */
+      bottom: -0.2em;
     }
 
     .loading-dots span:nth-child(1) {
@@ -278,10 +262,10 @@
 
     @keyframes pulseComplete {
       0%, 100% { 
-        box-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
+        box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
       }
       50% { 
-        box-shadow: 0 0 50px rgba(255, 255, 255, 0.3);
+        box-shadow: 0 0 40px rgba(255, 255, 255, 0.3);
       }
     }
 
@@ -307,72 +291,86 @@
       }
     }
 
-    /* Responsive adjustments */
+    /* Mobile-specific adjustments */
     @media (max-width: 480px) {
+      body {
+        padding: 15px;
+      }
+      
       .container {
-        padding: var(--spacing-md);
-      }
-      
-      h1 {
-        font-size: 2.5rem;
-      }
-      
-      #status {
-        font-size: 0.9rem;
-      }
-      
-      .progress-circle-container {
-        width: 100px;
-        height: 100px;
-        margin: var(--spacing-md) auto var(--spacing-lg) auto;
-      }
-      
-      .progress-circle-text {
-        font-size: 1.2rem;
-      }
-      
-      .loading-dots span {
-        width: 3px;
-        height: 3px;
-        bottom: -0.15em;
-      }
-    }
-
-    @media (min-width: 1200px) {
-      .container {
-        max-width: 520px;
-      }
-      
-      h1 {
-        font-size: 4rem;
-      }
-      
-      .progress-circle-container {
-        width: 140px;
-        height: 140px;
-        margin: var(--spacing-xl) auto var(--spacing-xl) auto;
-      }
-      
-      .progress-circle-text {
-        font-size: 1.8rem;
-      }
-    }
-
-    /* Fix for specific screen sizes */
-    @media (max-height: 600px) {
-      .container {
-        transform: scale(0.9);
-        padding: var(--spacing-sm);
+        gap: 15px;
+        max-width: 320px;
       }
       
       .progress-circle-container {
         width: 90px;
         height: 90px;
-        margin: var(--spacing-sm) auto var(--spacing-md) auto;
+        margin: 5px 0;
+      }
+      
+      .loading-dots span {
+        width: 2.5px;
+        height: 2.5px;
+        bottom: -0.15em;
+      }
+    }
+
+    @media (max-height: 700px) {
+      .container {
+        transform: scale(0.9);
+      }
+      
+      h1 {
+        font-size: clamp(1.8rem, 7vw, 2.5rem);
+      }
+      
+      .progress-circle-container {
+        width: clamp(70px, 20vw, 100px);
+        height: clamp(70px, 20vw, 100px);
+      }
+      
+      #status {
+        font-size: clamp(0.8rem, 3vw, 0.9rem);
+      }
+    }
+
+    @media (max-height: 500px) {
+      .container {
+        transform: scale(0.8);
+        gap: 10px;
+      }
+      
+      h1 {
+        margin-bottom: 4px;
+      }
+      
+      .progress-circle-container {
+        margin: 0;
+      }
+    }
+
+    /* For very small screens */
+    @media (max-width: 320px) {
+      body {
+        padding: 10px;
+      }
+      
+      .container {
+        max-width: 280px;
+        gap: 10px;
+      }
+      
+      h1 {
+        font-size: 1.8rem;
+      }
+      
+      .progress-circle-container {
+        width: 70px;
+        height: 70px;
       }
       
       .progress-circle-text {
-        font-size: 1rem;
+        font-size: 0.9rem;
       }
     }
   </style>
@@ -380,8 +378,8 @@
 <body>
   <div class="container">
     <div class="logo-container">
-      <h1>StatusStrap</h1>
-      <div id="version">v1.0.11</div>
+      <h1 id="appTitle">StatusStrap</h1>
+      <div id="version">v1.0.12</div>
     </div>
     
     <div class="progress-circle-container">
@@ -407,6 +405,40 @@
     const progressText = document.getElementById('progressText');
     const statusEl = document.getElementById('status');
     const spinner = document.querySelector('.spinner');
+    const appTitle = document.getElementById('appTitle');
+    
+    // Ensure everything fits on screen
+    function fitToScreen() {
+      const container = document.querySelector('.container');
+      const body = document.body;
+      const windowHeight = window.innerHeight;
+      const windowWidth = window.innerWidth;
+      
+      // Check if content is too tall
+      const containerHeight = container.scrollHeight;
+      const maxAllowedHeight = windowHeight * 0.9; // 90% of window height
+      
+      if (containerHeight > maxAllowedHeight) {
+        const scale = maxAllowedHeight / containerHeight;
+        container.style.transform = `translateY(0) scale(${Math.min(scale, 1)})`;
+      }
+      
+      // Check if content is too wide
+      const containerWidth = container.scrollWidth;
+      const maxAllowedWidth = windowWidth * 0.9;
+      
+      if (containerWidth > maxAllowedWidth) {
+        const scale = maxAllowedWidth / containerWidth;
+        container.style.transform = `translateY(0) scale(${Math.min(scale, container.style.transform ? parseFloat(container.style.transform.split('scale(')[1]) : 1)})`;
+      }
+      
+      // Adjust font sizes if needed
+      if (windowHeight < 600) {
+        appTitle.style.fontSize = 'clamp(1.5rem, 6vw, 2rem)';
+        progressText.style.fontSize = 'clamp(0.9rem, 3vw, 1.2rem)';
+        statusEl.style.fontSize = 'clamp(0.75rem, 2.5vw, 0.875rem)';
+      }
+    }
     
     // Update circular progress
     function updateCircleProgress(percent) {
@@ -517,6 +549,9 @@
             }, 800);
           }, 1500);
         }
+        
+        // Re-check screen fitting after status update
+        setTimeout(fitToScreen, 100);
       }, 300);
     });
     
@@ -557,17 +592,11 @@
       // Start with 0% progress
       updateCircleProgress(0);
       
-      // Center everything properly
-      setTimeout(() => {
-        const container = document.querySelector('.container');
-        const windowHeight = window.innerHeight;
-        const containerHeight = container.offsetHeight;
-        
-        // Only adjust if container is taller than window
-        if (containerHeight > windowHeight * 0.9) {
-          container.style.transform = `scale(${(windowHeight * 0.9) / containerHeight})`;
-        }
-      }, 100);
+      // Fit content to screen
+      fitToScreen();
+      
+      // Also fit on window resize
+      window.addEventListener('resize', fitToScreen);
     });
   </script>
 </body>
