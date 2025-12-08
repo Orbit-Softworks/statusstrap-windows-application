@@ -51,6 +51,9 @@
       position: relative;
       transform: translateY(20px);
       animation: slideUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.2s forwards;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
     @keyframes slideUp {
@@ -61,7 +64,8 @@
 
     .logo-container {
       margin-bottom: var(--spacing-xl);
-      position: relative;
+      text-align: center;
+      width: 100%;
     }
 
     h1 {
@@ -115,35 +119,10 @@
       letter-spacing: 0.5px;
     }
 
-    .status-container {
-      position: relative;
-      margin: var(--spacing-xl) 0;
-      min-height: 28px;
-    }
-
-    #status {
-      font-size: 1rem;
-      font-weight: 500;
-      transition: all var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
-      position: absolute;
-      width: 100%;
-      opacity: 0;
-      transform: translateY(10px);
-      animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) 1s forwards;
-    }
-
-    #status.updated {
-      color: #4ade80;
-    }
-
-    #status.error {
-      color: #f87171;
-    }
-
     .progress-circle-container {
       width: 120px;
       height: 120px;
-      margin: var(--spacing-xl) auto;
+      margin: var(--spacing-lg) auto var(--spacing-xl) auto;
       position: relative;
       opacity: 0;
       animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) 1.2s forwards;
@@ -154,8 +133,8 @@
       height: 100%;
       border-radius: 50%;
       background: conic-gradient(
-        var(--progress-fill) 0deg,
-        var(--progress-track) 0deg
+        var(--progress-track) 0deg,
+        var(--progress-track) 360deg
       );
       position: relative;
       box-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
@@ -222,6 +201,77 @@
       to { transform: rotate(360deg); }
     }
 
+    .status-container {
+      position: relative;
+      margin-top: var(--spacing-lg);
+      min-height: 28px;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #status {
+      font-size: 1rem;
+      font-weight: 500;
+      transition: all var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
+      opacity: 0;
+      transform: translateY(10px);
+      animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) 1s forwards;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    #status.updated {
+      color: #4ade80;
+    }
+
+    #status.error {
+      color: #f87171;
+    }
+
+    /* Fixed loading dots alignment */
+    .loading-dots {
+      display: inline-flex;
+      align-items: flex-end; /* Changed to align at bottom */
+      height: 1em;
+      margin-left: 4px;
+    }
+
+    .loading-dots span {
+      width: 4px;
+      height: 4px;
+      background: currentColor;
+      border-radius: 50%;
+      animation: dots 1.4s infinite ease-in-out both;
+      margin: 0 1px;
+      vertical-align: baseline; /* Align with text baseline */
+      display: inline-block;
+      position: relative;
+      bottom: -0.1em; /* Adjust this to perfectly align with text */
+    }
+
+    .loading-dots span:nth-child(1) {
+      animation-delay: -0.32s;
+    }
+
+    .loading-dots span:nth-child(2) {
+      animation-delay: -0.16s;
+    }
+
+    @keyframes dots {
+      0%, 80%, 100% { 
+        transform: scale(0);
+        opacity: 0;
+      }
+      40% { 
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
     .progress-circle-bg.complete {
       animation: pulseComplete 1s ease;
     }
@@ -257,47 +307,6 @@
       }
     }
 
-    /* Dot animation for loading states */
-    .loading-dots {
-      display: inline-block;
-      position: relative;
-      width: 20px;
-      height: 20px;
-      margin-left: 5px;
-    }
-
-    .loading-dots span {
-      position: absolute;
-      width: 4px;
-      height: 4px;
-      background: currentColor;
-      border-radius: 50%;
-      animation: dots 1.4s infinite ease-in-out both;
-    }
-
-    .loading-dots span:nth-child(1) {
-      left: 0;
-      animation-delay: -0.32s;
-    }
-
-    .loading-dots span:nth-child(2) {
-      left: 8px;
-      animation-delay: -0.16s;
-    }
-
-    .loading-dots span:nth-child(3) {
-      left: 16px;
-    }
-
-    @keyframes dots {
-      0%, 80%, 100% { 
-        transform: scale(0);
-      }
-      40% { 
-        transform: scale(1.0);
-      }
-    }
-
     /* Responsive adjustments */
     @media (max-width: 480px) {
       .container {
@@ -315,10 +324,17 @@
       .progress-circle-container {
         width: 100px;
         height: 100px;
+        margin: var(--spacing-md) auto var(--spacing-lg) auto;
       }
       
       .progress-circle-text {
         font-size: 1.2rem;
+      }
+      
+      .loading-dots span {
+        width: 3px;
+        height: 3px;
+        bottom: -0.15em;
       }
     }
 
@@ -334,10 +350,29 @@
       .progress-circle-container {
         width: 140px;
         height: 140px;
+        margin: var(--spacing-xl) auto var(--spacing-xl) auto;
       }
       
       .progress-circle-text {
         font-size: 1.8rem;
+      }
+    }
+
+    /* Fix for specific screen sizes */
+    @media (max-height: 600px) {
+      .container {
+        transform: scale(0.9);
+        padding: var(--spacing-sm);
+      }
+      
+      .progress-circle-container {
+        width: 90px;
+        height: 90px;
+        margin: var(--spacing-sm) auto var(--spacing-md) auto;
+      }
+      
+      .progress-circle-text {
+        font-size: 1rem;
       }
     }
   </style>
@@ -346,7 +381,7 @@
   <div class="container">
     <div class="logo-container">
       <h1>StatusStrap</h1>
-      <div id="version">v1.0.0</div>
+      <div id="version">v1.0.11</div>
     </div>
     
     <div class="progress-circle-container">
@@ -356,7 +391,7 @@
     </div>
     
     <div class="status-container">
-      <div id="status">Initializing<span class="loading-dots"><span></span><span></span><span></span></span></div>
+      <div id="status">Checking for updates<span class="loading-dots"><span></span><span></span><span></span></span></div>
     </div>
   </div>
   
@@ -372,70 +407,6 @@
     const progressText = document.getElementById('progressText');
     const statusEl = document.getElementById('status');
     const spinner = document.querySelector('.spinner');
-    
-    // Status updates with smooth transitions
-    ipcRenderer.on('status', (event, message) => {
-      // Add fade out transition
-      statusEl.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-      statusEl.style.opacity = '0';
-      statusEl.style.transform = 'translateY(-10px)';
-      
-      setTimeout(() => {
-        // Update content
-        statusEl.textContent = message;
-        
-        // Add status type classes
-        statusEl.classList.remove('updated', 'error');
-        if (message.toLowerCase().includes('complete') || 
-            message.toLowerCase().includes('success')) {
-          statusEl.classList.add('updated');
-        } else if (message.toLowerCase().includes('error') || 
-                   message.toLowerCase().includes('failed')) {
-          statusEl.classList.add('error');
-        }
-        
-        // Add loading dots for ongoing processes
-        if (!message.toLowerCase().includes('complete') && 
-            !message.toLowerCase().includes('error') &&
-            !message.toLowerCase().includes('starting')) {
-          const dotsHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
-          statusEl.innerHTML = message + dotsHTML;
-        }
-        
-        // Fade in with animation
-        statusEl.style.transition = 'opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
-        setTimeout(() => {
-          statusEl.style.opacity = '1';
-          statusEl.style.transform = 'translateY(0)';
-        }, 10);
-        
-        // Check if app is starting
-        if (message.toLowerCase().includes('starting app')) {
-          // Complete the circle animation
-          updateCircleProgress(100);
-          
-          // Hide spinner when complete
-          setTimeout(() => {
-            spinner.style.opacity = '0';
-            spinner.style.transition = 'opacity 0.5s ease';
-          }, 300);
-          
-          // Start exit animation
-          setTimeout(() => {
-            document.body.classList.add('finishing');
-            // Notify main process that splash is done
-            setTimeout(() => {
-              ipcRenderer.send('splash-complete');
-            }, 800);
-          }, 1500);
-        }
-      }, 300);
-    });
-    
-    // Progress updates with circular fill
-    ipcRenderer.on('progress', (event, percent) => {
-      updateCircleProgress(percent);
-    });
     
     // Update circular progress
     function updateCircleProgress(percent) {
@@ -473,6 +444,87 @@
       }
     }
     
+    // Status updates with smooth transitions
+    ipcRenderer.on('status', (event, message) => {
+      // Add fade out transition
+      statusEl.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+      statusEl.style.opacity = '0';
+      statusEl.style.transform = 'translateY(-10px)';
+      
+      setTimeout(() => {
+        // Update content
+        statusEl.textContent = message;
+        
+        // Add status type classes
+        statusEl.classList.remove('updated', 'error');
+        if (message.toLowerCase().includes('complete') || 
+            message.toLowerCase().includes('success') ||
+            message.toLowerCase().includes('latest version')) {
+          statusEl.classList.add('updated');
+        } else if (message.toLowerCase().includes('error') || 
+                   message.toLowerCase().includes('failed')) {
+          statusEl.classList.add('error');
+        }
+        
+        // Add loading dots for ongoing processes
+        if (!message.toLowerCase().includes('complete') && 
+            !message.toLowerCase().includes('success') &&
+            !message.toLowerCase().includes('latest version') &&
+            !message.toLowerCase().includes('error') &&
+            !message.toLowerCase().includes('failed') &&
+            !message.toLowerCase().includes('starting')) {
+          // Create dots properly aligned with text
+          const dotsContainer = document.createElement('span');
+          dotsContainer.className = 'loading-dots';
+          for (let i = 0; i < 3; i++) {
+            const dot = document.createElement('span');
+            dotsContainer.appendChild(dot);
+          }
+          
+          // Clear and add new content
+          statusEl.innerHTML = '';
+          statusEl.appendChild(document.createTextNode(message));
+          statusEl.appendChild(dotsContainer);
+        } else {
+          // Clear any existing dots
+          statusEl.innerHTML = message;
+        }
+        
+        // Fade in with animation
+        statusEl.style.transition = 'opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+        setTimeout(() => {
+          statusEl.style.opacity = '1';
+          statusEl.style.transform = 'translateY(0)';
+        }, 10);
+        
+        // Check if app is starting
+        if (message.toLowerCase().includes('starting app')) {
+          // Complete the circle animation
+          updateCircleProgress(100);
+          
+          // Hide spinner when complete
+          setTimeout(() => {
+            spinner.style.opacity = '0';
+            spinner.style.transition = 'opacity 0.5s ease';
+          }, 300);
+          
+          // Start exit animation
+          setTimeout(() => {
+            document.body.classList.add('finishing');
+            // Notify main process that splash is done
+            setTimeout(() => {
+              ipcRenderer.send('splash-complete');
+            }, 800);
+          }, 1500);
+        }
+      }, 300);
+    });
+    
+    // Progress updates with circular fill
+    ipcRenderer.on('progress', (event, percent) => {
+      updateCircleProgress(percent);
+    });
+    
     // Handle errors
     ipcRenderer.on('error', (event, errorMessage) => {
       statusEl.textContent = errorMessage;
@@ -505,14 +557,17 @@
       // Start with 0% progress
       updateCircleProgress(0);
       
-      // Add a subtle breathing effect to the container
-      setInterval(() => {
+      // Center everything properly
+      setTimeout(() => {
         const container = document.querySelector('.container');
-        container.style.transform = 'translateY(-1px)';
-        setTimeout(() => {
-          container.style.transform = 'translateY(0)';
-        }, 1000);
-      }, 2000);
+        const windowHeight = window.innerHeight;
+        const containerHeight = container.offsetHeight;
+        
+        // Only adjust if container is taller than window
+        if (containerHeight > windowHeight * 0.9) {
+          container.style.transform = `scale(${(windowHeight * 0.9) / containerHeight})`;
+        }
+      }, 100);
     });
   </script>
 </body>
