@@ -295,7 +295,6 @@
       color: #ef4444;
     }
 
-    /* Loading dots - positioned inline with text */
     .loading-dots {
       display: inline-flex;
       align-items: center;
@@ -380,7 +379,6 @@
       opacity: 0;
     }
 
-    /* Mobile adjustments */
     @media (max-width: 480px) {
       body {
         padding: 15px;
@@ -425,7 +423,6 @@
       }
     }
 
-    /* Status card active state */
     .status-card.status-updating {
       border-color: rgba(74, 222, 128, 0.3);
     }
@@ -469,31 +466,26 @@
   <script>
     const { ipcRenderer } = require('electron');
     
-    // Get and display version
     const version = ipcRenderer.sendSync('get-version');
     document.getElementById('version').textContent = `v${version}`;
     
-    // DOM elements
     const progressCircle = document.getElementById('progressCircle');
     const progressText = document.getElementById('progressText');
     const statusEl = document.getElementById('status');
     const statusCard = document.getElementById('statusCard');
     const spinnerRing = document.querySelector('.spinner-ring');
     
-    // Variables for smoother percentage tracking
     let currentProgress = 0;
     let targetProgress = 0;
     let lastUpdateTime = 0;
-    const MIN_UPDATE_INTERVAL = 400; // 400ms between percentage updates
-    const ANIMATION_DURATION = 1400; // 1.4 seconds for progress animations
+    const MIN_UPDATE_INTERVAL = 400;
+    const ANIMATION_DURATION = 1400;
     
-    // Smooth progress animation
     function animateProgress() {
       const now = Date.now();
       const elapsed = now - lastUpdateTime;
       
       if (currentProgress < targetProgress && elapsed > MIN_UPDATE_INTERVAL) {
-        // Smooth step calculation
         const remaining = targetProgress - currentProgress;
         const step = Math.max(1, Math.min(4, Math.ceil(remaining / 12)));
         
@@ -501,19 +493,16 @@
         updateCircleProgress(currentProgress);
         lastUpdateTime = now;
         
-        // Continue animating if not at target
         if (currentProgress < targetProgress) {
           setTimeout(animateProgress, MIN_UPDATE_INTERVAL);
         }
       }
     }
     
-    // Update circular progress with smoother animation
     function updateCircleProgress(percent) {
       const degrees = (percent / 100) * 360;
       const fixedPercent = Math.min(100, Math.max(0, percent));
       
-      // Update conic-gradient background with smoother transition
       progressCircle.style.transition = `background ${ANIMATION_DURATION}ms cubic-bezier(0.34, 1.56, 0.64, 1)`;
       progressCircle.style.background = `
         conic-gradient(
@@ -524,17 +513,14 @@
         )
       `;
       
-      // Update percentage text with smooth transition
       progressText.style.transition = `all 0.6s cubic-bezier(0.4, 0, 0.2, 1)`;
       progressText.textContent = `${Math.round(fixedPercent)}%`;
       
-      // Scale text slightly as it changes
       progressText.style.transform = `translate(-50%, -50%) scale(1.1)`;
       setTimeout(() => {
         progressText.style.transform = `translate(-50%, -50%) scale(1)`;
       }, 300);
       
-      // Hide text at 100% with delay
       if (fixedPercent === 100) {
         setTimeout(() => {
           progressText.classList.add('hidden');
@@ -549,7 +535,6 @@
         statusCard.classList.remove('status-complete');
       }
       
-      // Subtle pulse animation at milestones
       if (fixedPercent === 25 || fixedPercent === 50 || fixedPercent === 75 || fixedPercent === 100) {
         setTimeout(() => {
           progressCircle.style.transform = 'scale(1.03)';
@@ -560,21 +545,16 @@
       }
     }
     
-    // Status updates with smooth transitions
     ipcRenderer.on('status', (event, message) => {
-      // Add status card animation
       statusCard.style.transition = 'all 0.6s ease';
       statusCard.style.opacity = '0.7';
       statusCard.style.transform = 'translateY(5px)';
       
       setTimeout(() => {
-        // Update content
         statusEl.textContent = message;
         
-        // Update status card appearance
         statusCard.classList.remove('status-updating', 'status-complete', 'status-error');
         
-        // Determine status type
         if (message.toLowerCase().includes('complete') || 
             message.toLowerCase().includes('success') ||
             message.toLowerCase().includes('latest version') ||
@@ -593,7 +573,6 @@
           statusCard.classList.add('status-updating');
         }
         
-        // Add loading dots for ongoing processes
         if (!message.toLowerCase().includes('complete') && 
             !message.toLowerCase().includes('success') &&
             !message.toLowerCase().includes('latest version') &&
@@ -601,7 +580,6 @@
             !message.toLowerCase().includes('error') &&
             !message.toLowerCase().includes('failed')) {
           
-          // Clear and add new content with dots
           statusEl.innerHTML = '';
           statusEl.appendChild(document.createTextNode(message));
           
@@ -613,38 +591,30 @@
           }
           statusEl.appendChild(dotsContainer);
         } else {
-          // Clear any existing dots
           statusEl.innerHTML = message;
         }
         
-        // Animate status card back in
         setTimeout(() => {
           statusCard.style.transition = 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
           statusCard.style.opacity = '1';
           statusCard.style.transform = 'translateY(0)';
         }, 50);
         
-        // Check if app is starting
         if (message.toLowerCase().includes('starting app')) {
-          // Complete the circle animation smoothly
           setTimeout(() => {
             targetProgress = 100;
             animateProgress();
           }, 1000);
           
-          // Update status card
           statusCard.classList.add('status-complete');
           
-          // Hide spinner when complete
           setTimeout(() => {
             spinnerRing.style.transition = 'opacity 1s ease';
             spinnerRing.style.opacity = '0';
           }, 1800);
           
-          // Start exit animation with delay
           setTimeout(() => {
             document.body.classList.add('finishing');
-            // Notify main process that splash is done
             setTimeout(() => {
               ipcRenderer.send('splash-complete');
             }, 1400);
@@ -653,27 +623,22 @@
       }, 400);
     });
     
-    // Progress updates with smoother percentage tracking
     ipcRenderer.on('progress', (event, percent) => {
       targetProgress = Math.min(100, Math.max(0, percent));
       
-      // Only start animation if not already animating
       if (currentProgress === 0 || currentProgress >= targetProgress) {
         currentProgress = targetProgress;
         updateCircleProgress(currentProgress);
       } else {
-        // Start smooth animation to target
         animateProgress();
       }
     });
     
-    // Handle errors
     ipcRenderer.on('error', (event, errorMessage) => {
       statusEl.textContent = errorMessage;
       statusEl.classList.add('error');
       statusCard.classList.add('status-error');
       
-      // Change circle to error state
       setTimeout(() => {
         progressCircle.style.transition = 'background 1.2s ease';
         progressCircle.style.background = `
@@ -683,13 +648,11 @@
           )
         `;
         
-        // Stop spinner
         spinnerRing.style.transition = 'opacity 0.8s ease, animation-play-state 0.8s ease';
         spinnerRing.style.opacity = '0.5';
         spinnerRing.style.animationPlayState = 'paused';
       }, 300);
       
-      // Error pulse animation
       const pulseError = () => {
         setTimeout(() => {
           progressCircle.style.transform = 'scale(1.03)';
@@ -702,14 +665,11 @@
       pulseError();
     });
     
-    // Initial animation sequence
     window.addEventListener('load', () => {
-      // Start with 0% progress
       currentProgress = 0;
       targetProgress = 0;
       updateCircleProgress(0);
       
-      // Initial status update after delay
       setTimeout(() => {
         statusCard.classList.add('status-updating');
         statusEl.innerHTML = 'Checking for updates<span class="loading-dots"><span></span><span></span><span></span></span>';
