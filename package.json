@@ -1,8 +1,11 @@
 {
   "name": "StatusStrap",
-  "version": "1.0.17",
+  "version": "1.0.16",
   "description": "StatusStrap App",
-  "author": "Smilez",
+  "author": {
+    "name": "Smilez",
+    "email": "smilezreal@yahoo.com"
+  },
   "main": "main.js",
   "repository": {
     "type": "git",
@@ -43,7 +46,8 @@
     "linux": {
       "target": ["AppImage", "deb", "rpm"],
       "category": "Utility",
-      "icon": "icon.png"
+      "icon": "icon.png",
+      "maintainer": "Smilez <smilezreal@yahoo.com>"
     },
     "nsis": {
       "oneClick": false,
