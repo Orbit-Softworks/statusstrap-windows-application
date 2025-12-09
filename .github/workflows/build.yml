@@ -39,7 +39,7 @@ jobs:
       if: runner.os != 'Windows'
       run: |
         rm -rf node_modules || true
-        npm install --no-audit --legacy-peer-deps --no-optional
+        npm install --no-audit --legacy-peer-deps --no-optional --no-save
       
     - name: Get current version
       id: get_version
@@ -68,6 +68,4 @@ jobs:
           dist/*.dmg
           dist/*.zip
           dist/*.AppImage
-          dist/*.deb
-          dist/*.rpm
         if-no-files-found: warn
