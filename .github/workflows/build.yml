@@ -12,13 +12,10 @@ jobs:
         os: [windows-latest, macos-latest, ubuntu-latest]
         include:
           - os: windows-latest
-            cache-key: windows
             build-command: --win
           - os: macos-latest
-            cache-key: macos
             build-command: --mac
           - os: ubuntu-latest
-            cache-key: linux
             build-command: --linux
     
     runs-on: ${{ matrix.os }}
@@ -32,19 +29,6 @@ jobs:
       with:
         node-version: 18
         cache: 'npm'
-        
-    - name: Cache dependencies
-      uses: actions/cache@v4
-      with:
-        path: ~/.npm
-        key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
-        restore-keys: |
-          ${{ runner.os }}-node-
-      
-    - name: Clean npm cache
-      run: |
-        npm cache clean --force
-        rm -rf node_modules || true
         
     - name: Install dependencies
       run: npm ci --no-audit --prefer-offline
@@ -61,24 +45,14 @@ jobs:
         fi
         echo "Building version: $version"
       
-    - name: Setup macOS certificate (macOS only)
+    - name: Remove macOS certificate creation (not needed)
       if: runner.os == 'macOS'
-      run: |
-        # Create a certificate for signing (self-signed for now)
-        echo "Creating self-signed certificate for macOS..."
-        openssl genrsa -out private.key 2048
-        openssl req -new -key private.key -out certificate.csr -subj "/CN=StatusStrap"
-        openssl x509 -req -days 365 -in certificate.csr -signkey private.key -out certificate.pem
-        echo "Certificate created"
+      run: echo "Skipping certificate creation - using default signing"
         
     - name: Build and Publish
       run: npx electron-builder ${{ matrix.build-command }} --publish always
       env:
         GH_TOKEN: ${{ secrets.GH_TOKEN }}
-        # Windows signing (if you have it)
-        # CSC_LINK: ${{ secrets.WINDOWS_CERT }}
-        # CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
-        # macOS notarization (disabled for now)
         CSC_IDENTITY_AUTO_DISCOVERY: false
         
     - name: Upload artifacts
