@@ -1,6 +1,6 @@
 {
   "name": "StatusStrap",
-  "version": "1.0.16",
+  "version": "1.0.17",
   "description": "StatusStrap App",
   "author": {
     "name": "Smilez",
@@ -21,7 +21,8 @@
   },
   "devDependencies": {
     "electron": "^26.6.10",
-    "electron-builder": "^24.13.3"
+    "electron-builder": "^24.13.3",
+    "dmg-license": "^1.0.11"
   },
   "dependencies": {
     "electron-updater": "^6.6.2",
@@ -44,7 +45,7 @@
       "entitlementsInherit": "entitlements.mac.plist"
     },
     "linux": {
-      "target": ["AppImage", "deb", "rpm"],
+      "target": ["AppImage"],
       "category": "Utility",
       "icon": "icon.png",
       "maintainer": "Smilez <smilezreal@yahoo.com>"
