@@ -39,6 +39,6 @@ __This project is proprietary software developed by Orbit-Softworks. All rights 
 
 Developer: __Smilez__
 
-Email: __smilezreal@yahoo.com__
+Contact Me Via: __[Discord](https://discord.gg/JSJcNC4Jv9)__
 
 GitHub __Organization: Orbit-Softworks__
