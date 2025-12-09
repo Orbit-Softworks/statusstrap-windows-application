@@ -27,6 +27,7 @@ Official desktop application for StatusStrap - Monitor your server status with e
    ```bash
    chmod +x StatusStrap-X.X.X.AppImage
 3. Run the application:
+   ```bash
    ./StatusStrap-X.X.X.AppImage
 
 
