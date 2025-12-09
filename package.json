@@ -35,7 +35,7 @@
       "icon": "icon.ico"
     },
     "mac": {
-      "target": ["zip"],  // ZIP only, no DMG
+      "target": ["zip"],
       "category": "public.app-category.utilities",
       "icon": "icon.png",
       "hardenedRuntime": true,
