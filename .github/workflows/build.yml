@@ -30,12 +30,18 @@ jobs:
         node-version: 18
         # No cache since we don't have package-lock.json
         
-    - name: Clean install
+    - name: Clean install (Windows)
+      if: runner.os == 'Windows'
       run: |
-        # Clean any existing node_modules
+        # Windows PowerShell commands
+        Remove-Item -Recurse -Force node_modules -ErrorAction SilentlyContinue
+        npm install --no-audit --legacy-peer-deps --no-optional
+      
+    - name: Clean install (macOS/Linux)
+      if: runner.os != 'Windows'
+      run: |
+        # Unix commands for macOS and Linux
         rm -rf node_modules || true
-        
-        # Install dependencies without package-lock.json
         npm install --no-audit --legacy-peer-deps --no-optional
       
     - name: Get current version
