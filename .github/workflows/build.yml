@@ -10,13 +10,6 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest, macos-latest, ubuntu-latest]
-        include:
-          - os: windows-latest
-            build-command: --win
-          - os: macos-latest
-            build-command: --mac
-          - os: ubuntu-latest
-            build-command: --linux
     
     runs-on: ${{ matrix.os }}
     
@@ -29,23 +22,8 @@ jobs:
       with:
         node-version: 18
         
-    - name: Clean install (Windows)
-      if: runner.os == 'Windows'
-      run: |
-        Remove-Item -Recurse -Force node_modules -ErrorAction SilentlyContinue
-        npm install --no-audit --legacy-peer-deps --no-optional
-      
-    - name: Clean install (macOS)
-      if: runner.os == 'macOS'
-      run: |
-        rm -rf node_modules || true
-        npm install --no-audit --legacy-peer-deps --no-optional
-      
-    - name: Clean install (Linux)
-      if: runner.os == 'Linux'
-      run: |
-        rm -rf node_modules || true
-        npm install --no-audit --legacy-peer-deps --omit=optional
+    - name: Install dependencies
+      run: npm install --no-audit --legacy-peer-deps
       
     - name: Get current version
       id: get_version
@@ -60,7 +38,14 @@ jobs:
         echo "Building version: $version"
         
     - name: Build and Publish
-      run: npx electron-builder ${{ matrix.build-command }} --publish always
+      run: |
+        if [ "$RUNNER_OS" = "Windows" ]; then
+          npx electron-builder --win --publish always
+        elif [ "$RUNNER_OS" = "macOS" ]; then
+          npx electron-builder --mac --publish always
+        else
+          npx electron-builder --linux --publish always
+        fi
       env:
         GH_TOKEN: ${{ secrets.GH_TOKEN }}
         CSC_IDENTITY_AUTO_DISCOVERY: false
@@ -71,7 +56,6 @@ jobs:
         name: ${{ runner.os }}-artifacts
         path: |
           dist/*.exe
-          dist/*.dmg
           dist/*.zip
           dist/*.AppImage
         if-no-files-found: warn
