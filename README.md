@@ -32,9 +32,11 @@ Official desktop application for StatusStrap - Monitor your server status with e
 
 
 📝 License
+
 This project is proprietary software developed by Orbit-Softworks. All rights reserved.
 
 📧 Contact & Support
+
 Developer: Smilez
 
 Email: smilezreal@yahoo.com
