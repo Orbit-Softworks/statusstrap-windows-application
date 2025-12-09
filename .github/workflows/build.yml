@@ -37,25 +37,44 @@ jobs:
         fi
         echo "Building version: $version"
         
-    - name: Build and Publish
-      run: |
-        if [ "$RUNNER_OS" = "Windows" ]; then
-          npx electron-builder --win --publish always
-        elif [ "$RUNNER_OS" = "macOS" ]; then
-          npx electron-builder --mac --publish always
-        else
-          npx electron-builder --linux --publish always
-        fi
+    - name: Build and Publish (Windows)
+      if: runner.os == 'Windows'
+      run: npx electron-builder --win --publish always
       env:
         GH_TOKEN: ${{ secrets.GH_TOKEN }}
         CSC_IDENTITY_AUTO_DISCOVERY: false
         
-    - name: Upload artifacts
+    - name: Build and Publish (macOS)
+      if: runner.os == 'macOS'
+      run: npx electron-builder --mac --publish always
+      env:
+        GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        CSC_IDENTITY_AUTO_DISCOVERY: false
+        
+    - name: Build and Publish (Linux)
+      if: runner.os == 'Linux'
+      run: npx electron-builder --linux --publish always
+      env:
+        GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        CSC_IDENTITY_AUTO_DISCOVERY: false
+        
+    - name: Upload Windows artifacts
+      if: runner.os == 'Windows'
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ runner.os }}-artifacts
-        path: |
-          dist/*.exe
-          dist/*.zip
-          dist/*.AppImage
-        if-no-files-found: warn
+        name: windows-artifacts
+        path: dist/*.exe
+        
+    - name: Upload macOS artifacts
+      if: runner.os == 'macOS'
+      uses: actions/upload-artifact@v4
+      with:
+        name: macos-artifacts
+        path: dist/*.zip
+        
+    - name: Upload Linux artifacts
+      if: runner.os == 'Linux'
+      uses: actions/upload-artifact@v4
+      with:
+        name: linux-artifacts
+        path: dist/*.AppImage
