@@ -10,8 +10,11 @@
   },
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder --win",
-    "publish": "electron-builder --win -p always"
+    "build": "electron-builder --mac --linux --win",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "build:linux": "electron-builder --linux",
+    "publish": "electron-builder --mac --linux --win -p always"
   },
   "devDependencies": {
     "electron": "^26.6.10",
@@ -27,6 +30,20 @@
     "win": {
       "target": "nsis",
       "icon": "icon.ico"
+    },
+    "mac": {
+      "target": ["dmg", "zip"],
+      "category": "public.app-category.utilities",
+      "icon": "icon.png",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "entitlements.mac.plist",
+      "entitlementsInherit": "entitlements.mac.plist"
+    },
+    "linux": {
+      "target": ["AppImage", "deb", "rpm"],
+      "category": "Utility",
+      "icon": "icon.png"
     },
     "nsis": {
       "oneClick": false,
