@@ -444,6 +444,7 @@ function setupAutoUpdater() {
   console.log('Feed provider: github');
   console.log('Owner: Orbit-Softworks');
   console.log('Repo: statusstrap-windows-application');
+  console.log('Platform:', process.platform);
   
   autoUpdater.autoDownload = true;
   autoUpdater.autoInstallOnAppQuit = true;
@@ -603,6 +604,7 @@ app.on('window-all-closed', () => {
     clearInterval(securityCheckInterval);
   }
   
+  // Keep macOS behavior (don't quit when all windows are closed)
   if (process.platform !== 'darwin') app.quit();
 });
 
