@@ -31,14 +31,14 @@ Official desktop application for StatusStrap - Monitor your server status with e
    ./StatusStrap-X.X.X.AppImage
 
 
-📝 License
+## 📝 License
 
-This project is proprietary software developed by Orbit-Softworks. All rights reserved.
+__This project is proprietary software developed by Orbit-Softworks. All rights reserved.__
 
-📧 Contact & Support
+## 📧 Contact & Support
 
-Developer: Smilez
+Developer: __Smilez__
 
-Email: smilezreal@yahoo.com
+Email: __smilezreal@yahoo.com__
 
-GitHub Organization: Orbit-Softworks
+GitHub __Organization: Orbit-Softworks__
