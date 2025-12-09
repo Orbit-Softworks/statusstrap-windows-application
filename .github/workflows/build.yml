@@ -7,7 +7,11 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    
+    runs-on: ${{ matrix.os }}
     
     steps:
     - name: Checkout code
@@ -24,11 +28,70 @@ jobs:
     - name: Get current version
       id: get_version
       run: |
-        $version = node -p "require('./package.json').version"
-        echo "version=$version" >> $env:GITHUB_OUTPUT
+        if [ "$RUNNER_OS" = "Windows" ]; then
+          $version = node -p "require('./package.json').version"
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+        else
+          version=$(node -p "require('./package.json').version")
+          echo "version=$version" >> $GITHUB_OUTPUT
+        fi
         echo "Building version: $version"
       
-    - name: Build and Publish
+    - name: Setup macOS certificate (macOS only)
+      if: runner.os == 'macOS'
+      run: |
+        # Create a certificate for signing (self-signed for now)
+        # For production, you'll need proper Apple Developer credentials
+        echo "Creating self-signed certificate for macOS..."
+        openssl genrsa -out private.key 2048
+        openssl req -new -key private.key -out certificate.csr -subj "/CN=StatusStrap"
+        openssl x509 -req -days 365 -in certificate.csr -signkey private.key -out certificate.pem
+        echo "Certificate created"
+        
+    - name: Build and Publish (Windows)
+      if: runner.os == 'Windows'
       run: npx electron-builder --win --publish always
       env:
         GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        CSC_LINK: ${{ secrets.WINDOWS_CERT }}
+        CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
+        
+    - name: Build and Publish (macOS)
+      if: runner.os == 'macOS'
+      run: npx electron-builder --mac --publish always
+      env:
+        GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        # For production: Use proper Apple Developer credentials
+        # CSC_LINK: ${{ secrets.MAC_CERT }}
+        # CSC_KEY_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
+        # APPLE_ID: ${{ secrets.APPLE_ID }}
+        # APPLE_ID_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+        # For now, skip notarization (users will need to right-click -> Open)
+        CSC_IDENTITY_AUTO_DISCOVERY: false
+        
+    - name: Build and Publish (Linux)
+      if: runner.os == 'Linux'
+      run: npx electron-builder --linux --publish always
+      env:
+        GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        
+    - name: Upload Windows artifacts
+      if: runner.os == 'Windows'
+      uses: actions/upload-artifact@v3
+      with:
+        name: windows-artifacts
+        path: dist/*.exe
+        
+    - name: Upload macOS artifacts
+      if: runner.os == 'macOS'
+      uses: actions/upload-artifact@v3
+      with:
+        name: macos-artifacts
+        path: dist/*.dmg
+        
+    - name: Upload Linux artifacts
+      if: runner.os == 'Linux'
+      uses: actions/upload-artifact@v3
+      with:
+        name: linux-artifacts
+        path: dist/*.AppImage
