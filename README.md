@@ -30,43 +30,6 @@ Official desktop application for StatusStrap - Monitor your server status with e
    ```bash
    ./StatusStrap-X.X.X.AppImage
 
-
-   
-✨ Features
-
-🔒 Enhanced Security - Built-in security measures against unauthorized access
-
-🔄 Auto-Updates - Automatic updates with progress display
-
-🎨 Modern UI - Clean, professional interface with splash screen
-
-🌐 Cross-Platform - Works on Windows, macOS, and Linux
-
-📊 Real-time Monitoring - Monitor your server status in real-time
-
-⚡ Fast Performance - Built with Electron for optimal performance
-
-🔐 Authentication - Secure app token authentication system
-
-🖥️ Splash Screen - Professional loading experience with update progress
-
-🛠️ Technical Details
-Framework: Electron 26.6.10
-
-Auto-updater: electron-updater 6.6.2
-
-Build System: electron-builder 24.13.3
-
-Languages: JavaScript, HTML, CSS
-
-Package Formats:
-
-Windows: NSIS installer (.exe)
-
-macOS: ZIP archive (.app bundle)
-
-Linux: AppImage (universal Linux format)
-
 📊 Download Statistics
 Platform	Downloads
 Total Downloads	https://img.shields.io/github/downloads/Orbit-Softworks/statusstrap-windows-application/total?label=%2520&logo=github&style=flat-square
