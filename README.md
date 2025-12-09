@@ -25,10 +25,10 @@ Official desktop application for StatusStrap - Monitor your server status with e
 1. Download `StatusStrap-X.X.X.AppImage` from [Latest Release](https://github.com/Orbit-Softworks/statusstrap-windows-application/releases/latest)
 2. Make it executable:
    ```bash
-   chmod +x StatusStrap-X.X.X.AppImage
+   chmod +x StatusStrap-X.X.X.AppImage```
 3. Run the application:
    ```bash
-   ./StatusStrap-X.X.X.AppImage
+   ./StatusStrap-X.X.X.AppImage```
 
 
    ✨ Features
