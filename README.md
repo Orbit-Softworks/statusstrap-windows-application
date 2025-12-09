@@ -32,11 +32,11 @@ Official desktop application for StatusStrap - Monitor your server status with e
 
 📊 Download Statistics
 Platform	Downloads
-Total Downloads	https://img.shields.io/github/downloads/Orbit-Softworks/statusstrap-windows-application/total?label=%2520&logo=github&style=flat-square
-Latest Release	https://img.shields.io/github/downloads/Orbit-Softworks/statusstrap-windows-application/latest/total?label=%2520&logo=github&style=flat-square
-Windows	https://img.shields.io/github/downloads/Orbit-Softworks/statusstrap-windows-application/latest/StatusStrap%2520Setup*.exe?label=%2520&logo=windows&style=flat-square
-macOS	https://img.shields.io/github/downloads/Orbit-Softworks/statusstrap-windows-application/latest/StatusStrap-*.zip?label=%2520&logo=apple&style=flat-square
-Linux	https://img.shields.io/github/downloads/Orbit-Softworks/statusstrap-windows-application/latest/StatusStrap-*.AppImage?label=%2520&logo=linux&style=flat-square
+[Total Downloads](https://img.shields.io/github/downloads/Orbit-Softworks/statusstrap-windows-application/total?label=%2520&logo=github&style=flat-square)
+[Latest Release](https://img.shields.io/github/downloads/Orbit-Softworks/statusstrap-windows-application/latest/total?label=%2520&logo=github&style=flat-square)
+[Windows](https://img.shields.io/github/downloads/Orbit-Softworks/statusstrap-windows-application/latest/StatusStrap%2520Setup*.exe?label=%2520&logo=windows&style=flat-square)
+[macOS](https://img.shields.io/github/downloads/Orbit-Softworks/statusstrap-windows-application/latest/StatusStrap-*.zip?label=%2520&logo=apple&style=flat-square)
+[Linux](https://img.shields.io/github/downloads/Orbit-Softworks/statusstrap-windows-application/latest/StatusStrap-*.AppImage?label=%2520&logo=linux&style=flat-square)
 🔄 Auto-Update System
 The application features a robust auto-update system:
 
