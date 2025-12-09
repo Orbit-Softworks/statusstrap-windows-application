@@ -30,18 +30,6 @@ Official desktop application for StatusStrap - Monitor your server status with e
    ```bash
    ./StatusStrap-X.X.X.AppImage
 
-🔄 Auto-Update System
-The application features a robust auto-update system:
-
-Automatic Check - Checks for updates on every startup
-
-Background Download - Downloads updates silently
-
-Progress Display - Shows download progress in splash screen
-
-Seamless Installation - Installs updates automatically on restart
-
-Multi-Platform - Works on Windows, macOS, and Linux
 
 📝 License
 This project is proprietary software developed by Orbit-Softworks. All rights reserved.
