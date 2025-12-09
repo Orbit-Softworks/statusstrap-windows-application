@@ -35,11 +35,17 @@ jobs:
         Remove-Item -Recurse -Force node_modules -ErrorAction SilentlyContinue
         npm install --no-audit --legacy-peer-deps --no-optional
       
-    - name: Clean install (macOS/Linux)
-      if: runner.os != 'Windows'
+    - name: Clean install (macOS)
+      if: runner.os == 'macOS'
       run: |
         rm -rf node_modules || true
-        npm install --no-audit --legacy-peer-deps --no-optional --no-save
+        npm install --no-audit --legacy-peer-deps --no-optional
+      
+    - name: Clean install (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        rm -rf node_modules || true
+        npm install --no-audit --legacy-peer-deps --omit=optional
       
     - name: Get current version
       id: get_version
