@@ -28,19 +28,16 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: 18
-        # No cache since we don't have package-lock.json
         
     - name: Clean install (Windows)
       if: runner.os == 'Windows'
       run: |
-        # Windows PowerShell commands
         Remove-Item -Recurse -Force node_modules -ErrorAction SilentlyContinue
         npm install --no-audit --legacy-peer-deps --no-optional
       
     - name: Clean install (macOS/Linux)
       if: runner.os != 'Windows'
       run: |
-        # Unix commands for macOS and Linux
         rm -rf node_modules || true
         npm install --no-audit --legacy-peer-deps --no-optional
       
