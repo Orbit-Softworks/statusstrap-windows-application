@@ -25,16 +25,21 @@ jobs:
     - name: Install dependencies
       run: npm install --no-audit --legacy-peer-deps
       
-    - name: Get current version
-      id: get_version
+    - name: Get current version (Windows)
+      if: runner.os == 'Windows'
+      id: get_version_win
+      shell: pwsh
       run: |
-        if [ "$RUNNER_OS" = "Windows" ]; then
-          $version = node -p "require('./package.json').version"
-          echo "version=$version" >> $env:GITHUB_OUTPUT
-        else
-          version=$(node -p "require('./package.json').version")
-          echo "version=$version" >> $GITHUB_OUTPUT
-        fi
+        $version = node -p "require('./package.json').version"
+        echo "version=$version" >> $env:GITHUB_OUTPUT
+        echo "Building version: $version"
+      
+    - name: Get current version (macOS/Linux)
+      if: runner.os != 'Windows'
+      id: get_version_unix
+      run: |
+        version=$(node -p "require('./package.json').version")
+        echo "version=$version" >> $GITHUB_OUTPUT
         echo "Building version: $version"
         
     - name: Build and Publish (Windows)
