@@ -10,6 +10,16 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest, macos-latest, ubuntu-latest]
+        include:
+          - os: windows-latest
+            cache-key: windows
+            build-command: --win
+          - os: macos-latest
+            cache-key: macos
+            build-command: --mac
+          - os: ubuntu-latest
+            cache-key: linux
+            build-command: --linux
     
     runs-on: ${{ matrix.os }}
     
@@ -21,9 +31,23 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: 18
+        cache: 'npm'
+        
+    - name: Cache dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
+      
+    - name: Clean npm cache
+      run: |
+        npm cache clean --force
+        rm -rf node_modules || true
         
     - name: Install dependencies
-      run: npm install
+      run: npm ci --no-audit --prefer-offline
       
     - name: Get current version
       id: get_version
@@ -41,57 +65,31 @@ jobs:
       if: runner.os == 'macOS'
       run: |
         # Create a certificate for signing (self-signed for now)
-        # For production, you'll need proper Apple Developer credentials
         echo "Creating self-signed certificate for macOS..."
         openssl genrsa -out private.key 2048
         openssl req -new -key private.key -out certificate.csr -subj "/CN=StatusStrap"
         openssl x509 -req -days 365 -in certificate.csr -signkey private.key -out certificate.pem
         echo "Certificate created"
         
-    - name: Build and Publish (Windows)
-      if: runner.os == 'Windows'
-      run: npx electron-builder --win --publish always
+    - name: Build and Publish
+      run: npx electron-builder ${{ matrix.build-command }} --publish always
       env:
         GH_TOKEN: ${{ secrets.GH_TOKEN }}
-        CSC_LINK: ${{ secrets.WINDOWS_CERT }}
-        CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
-        
-    - name: Build and Publish (macOS)
-      if: runner.os == 'macOS'
-      run: npx electron-builder --mac --publish always
-      env:
-        GH_TOKEN: ${{ secrets.GH_TOKEN }}
-        # For production: Use proper Apple Developer credentials
-        # CSC_LINK: ${{ secrets.MAC_CERT }}
-        # CSC_KEY_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
-        # APPLE_ID: ${{ secrets.APPLE_ID }}
-        # APPLE_ID_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-        # For now, skip notarization (users will need to right-click -> Open)
+        # Windows signing (if you have it)
+        # CSC_LINK: ${{ secrets.WINDOWS_CERT }}
+        # CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
+        # macOS notarization (disabled for now)
         CSC_IDENTITY_AUTO_DISCOVERY: false
         
-    - name: Build and Publish (Linux)
-      if: runner.os == 'Linux'
-      run: npx electron-builder --linux --publish always
-      env:
-        GH_TOKEN: ${{ secrets.GH_TOKEN }}
-        
-    - name: Upload Windows artifacts
-      if: runner.os == 'Windows'
+    - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: windows-artifacts
-        path: dist/*.exe
-        
-    - name: Upload macOS artifacts
-      if: runner.os == 'macOS'
-      uses: actions/upload-artifact@v4
-      with:
-        name: macos-artifacts
-        path: dist/*.dmg
-        
-    - name: Upload Linux artifacts
-      if: runner.os == 'Linux'
-      uses: actions/upload-artifact@v4
-      with:
-        name: linux-artifacts
-        path: dist/*.AppImage
+        name: ${{ runner.os }}-artifacts
+        path: |
+          dist/*.exe
+          dist/*.dmg
+          dist/*.zip
+          dist/*.AppImage
+          dist/*.deb
+          dist/*.rpm
+        if-no-files-found: warn
