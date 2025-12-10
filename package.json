@@ -35,10 +35,8 @@
       "icon": "icon.ico"
     },
     "mac": {
-      "target": {
-        "target": "default",
-        "arch": ["x64", "arm64"]
-      },
+      "target": ["dmg"],
+      "arch": ["x64", "arm64"],
       "category": "public.app-category.utilities",
       "icon": "icon.png",
       "hardenedRuntime": true,
