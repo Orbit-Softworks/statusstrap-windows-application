@@ -1,6 +1,6 @@
 {
   "name": "StatusStrap",
-  "version": "1.0.20",
+  "version": "1.0.21",
   "description": "StatusStrap App",
   "author": {
     "name": "Smilez",
@@ -51,7 +51,12 @@
       "gatekeeperAssess": false
     },
     "linux": {
-      "target": ["AppImage", "deb"],
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": ["x64", "arm64"]
+        }
+      ],
       "category": "Utility",
       "icon": "icon.png",
       "maintainer": "Smilez <smilezreal@yahoo.com>"
