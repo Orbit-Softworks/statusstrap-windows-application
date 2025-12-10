@@ -445,28 +445,12 @@ function setupAutoUpdater() {
   console.log('Owner: Orbit-Softworks');
   console.log('Repo: statusstrap-windows-application');
   console.log('Platform:', process.platform);
-  console.log('Architecture:', process.arch);
   
-  // Configure auto-updater based on platform
   autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
   autoUpdater.allowDowngrade = false;
   autoUpdater.allowPrerelease = false;
   autoUpdater.fullChangelog = true;
-  
-  // Platform-specific settings
-  if (process.platform === 'win32') {
-    // Windows: Auto-install on quit
-    autoUpdater.autoInstallOnAppQuit = true;
-    console.log('Windows: Auto-install enabled');
-  } else if (process.platform === 'darwin') {
-    // macOS: User needs to manually install DMG
-    autoUpdater.autoInstallOnAppQuit = false;
-    console.log('macOS: Manual installation required');
-  } else if (process.platform === 'linux') {
-    // Linux: AppImages need manual replacement
-    autoUpdater.autoInstallOnAppQuit = false;
-    console.log('Linux: Manual AppImage replacement required');
-  }
   
   autoUpdater.on('checking-for-update', () => {
     console.log('Checking for updates...');
@@ -480,7 +464,6 @@ function setupAutoUpdater() {
     console.log('Version:', info.version);
     console.log('Release date:', info.releaseDate);
     console.log('Release notes:', info.releaseNotes);
-    console.log('Files:', info.files);
     
     if (splashWindow) {
       splashWindow.webContents.send('status', `Update ${info.version} available!`);
@@ -518,67 +501,21 @@ function setupAutoUpdater() {
   autoUpdater.on('update-downloaded', (info) => {
     console.log('=== UPDATE DOWNLOADED ===');
     console.log('Version ready to install:', info.version);
-    console.log('Platform:', process.platform);
     
-    if (process.platform === 'win32') {
-      // Windows: Auto-install
-      if (splashWindow) {
-        splashWindow.webContents.send('progress', 100);
-        splashWindow.webContents.send('status', 'Update downloaded!');
-        
-        setTimeout(() => {
-          splashWindow.webContents.send('status', 'Restarting to install update...');
-          
-          setTimeout(() => {
-            console.log('Calling quitAndInstall()...');
-            autoUpdater.quitAndInstall(true, true);
-          }, 2000);
-        }, 1000);
-      } else {
-        autoUpdater.quitAndInstall(true, true);
-      }
-    } else if (process.platform === 'darwin') {
-      // macOS: Notify user to install DMG manually
-      console.log('macOS: Update downloaded, user must install manually');
-      if (splashWindow) {
-        splashWindow.webContents.send('progress', 100);
-        splashWindow.webContents.send('status', 'Update ready! Restart to install.');
-        
-        setTimeout(() => {
-          splashWindow.webContents.send('status', 'Starting app...');
-          setTimeout(() => createMainWindow(), 1000);
-        }, 3000);
-      } else {
-        createMainWindow();
-      }
+    if (splashWindow) {
+      splashWindow.webContents.send('progress', 100);
+      splashWindow.webContents.send('status', 'Update downloaded!');
       
-      // Show notification in main window when it opens
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.executeJavaScript(`
-          alert('Update v${info.version} downloaded! Please quit and restart the app to install.');
-        `);
-      }
-    } else if (process.platform === 'linux') {
-      // Linux: Notify user about AppImage update
-      console.log('Linux: Update downloaded, user must replace AppImage manually');
-      if (splashWindow) {
-        splashWindow.webContents.send('progress', 100);
-        splashWindow.webContents.send('status', 'Update available! Check GitHub releases.');
+      setTimeout(() => {
+        splashWindow.webContents.send('status', 'Restarting to install update...');
         
         setTimeout(() => {
-          splashWindow.webContents.send('status', 'Starting app...');
-          setTimeout(() => createMainWindow(), 1000);
-        }, 3000);
-      } else {
-        createMainWindow();
-      }
-      
-      // Show notification in main window
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.executeJavaScript(`
-          alert('Update v${info.version} available! Download the new AppImage from GitHub releases.');
-        `);
-      }
+          console.log('Calling quitAndInstall()...');
+          autoUpdater.quitAndInstall(true, true);
+        }, 2000);
+      }, 1000);
+    } else {
+      autoUpdater.quitAndInstall(true, true);
     }
   });
   
@@ -586,13 +523,10 @@ function setupAutoUpdater() {
     console.error('=== AUTO-UPDATE ERROR ===');
     console.error('Error message:', err.message);
     console.error('Error stack:', err.stack);
-    console.error('Platform:', process.platform);
     
     if (err.message.includes('404') || err.message.includes('Not Found')) {
-      console.error('ERROR: Update files not found on GitHub');
-      console.error('Windows needs: latest.yml and .exe');
-      console.error('macOS needs: latest-mac.yml and .dmg/.zip');
-      console.error('Linux needs: latest-linux.yml and .AppImage');
+      console.error('ERROR: latest.yml or installer not found on GitHub');
+      console.error('Check that the release contains: latest.yml and .exe file');
     } else if (err.message.includes('sha512') || err.message.includes('checksum')) {
       console.error('ERROR: File hash mismatch');
     } else if (err.message.includes('net::ERR')) {
@@ -602,7 +536,7 @@ function setupAutoUpdater() {
     }
     
     if (splashWindow) {
-      splashWindow.webContents.send('status', 'Update check failed, starting app...');
+      splashWindow.webContents.send('status', 'Update failed, starting app...');
       setTimeout(() => createMainWindow(), 1500);
     } else {
       createMainWindow();
@@ -652,7 +586,6 @@ function checkForUpdates() {
 app.on('ready', () => {
   console.log(`StatusStrap v${app.getVersion()} starting...`);
   console.log(`App Token: ${APP_CONFIG.APP_TOKEN}`);
-  console.log(`Platform: ${process.platform} ${process.arch}`);
   createSplash();
   
   setTimeout(() => {
@@ -675,13 +608,6 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
 
-app.on('activate', () => {
-  // macOS: Re-create window when dock icon is clicked
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createMainWindow();
-  }
-});
-
 app.on('will-quit', () => {
   try {
     globalShortcut.unregisterAll();
@@ -698,7 +624,6 @@ ipcMain.on('get-version', (event) => {
   event.returnValue = app.getVersion();
 });
 
-// Debug functions
 global.debugUpdate = () => {
   console.log('=== MANUAL UPDATE DEBUG ===');
   if (app.isPackaged) {
