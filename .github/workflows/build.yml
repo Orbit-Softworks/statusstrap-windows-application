@@ -1,4 +1,5 @@
 name: Build and Release
+
 on: 
   workflow_dispatch:
   push:
@@ -9,7 +10,13 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
+        include:
+          - os: windows-latest
+            platform: win
+          - os: macos-latest
+            platform: mac
+          - os: ubuntu-latest
+            platform: linux
     
     runs-on: ${{ matrix.os }}
     
@@ -25,61 +32,55 @@ jobs:
     - name: Install dependencies
       run: npm install --no-audit --legacy-peer-deps
       
-    - name: Get current version (Windows)
-      if: runner.os == 'Windows'
-      id: get_version_win
-      shell: pwsh
-      run: |
-        $version = node -p "require('./package.json').version"
-        echo "version=$version" >> $env:GITHUB_OUTPUT
-        echo "Building version: $version"
-      
-    - name: Get current version (macOS/Linux)
-      if: runner.os != 'Windows'
-      id: get_version_unix
+    - name: Get current version
+      id: get_version
+      shell: bash
       run: |
         version=$(node -p "require('./package.json').version")
         echo "version=$version" >> $GITHUB_OUTPUT
         echo "Building version: $version"
         
-    - name: Build and Publish (Windows)
-      if: runner.os == 'Windows'
+    - name: Build (Windows)
+      if: matrix.platform == 'win'
       run: npx electron-builder --win --publish always
       env:
         GH_TOKEN: ${{ secrets.GH_TOKEN }}
-        CSC_IDENTITY_AUTO_DISCOVERY: false
         
-    - name: Build and Publish (macOS - Universal)
-      if: runner.os == 'macOS'
-      run: npx electron-builder --mac --x64 --arm64 --publish always
+    - name: Build (macOS)
+      if: matrix.platform == 'mac'
+      run: npx electron-builder --mac --publish always
       env:
         GH_TOKEN: ${{ secrets.GH_TOKEN }}
         CSC_IDENTITY_AUTO_DISCOVERY: false
         
-    - name: Build and Publish (Linux)
-      if: runner.os == 'Linux'
+    - name: Build (Linux)
+      if: matrix.platform == 'linux'
       run: npx electron-builder --linux --publish always
       env:
         GH_TOKEN: ${{ secrets.GH_TOKEN }}
-        CSC_IDENTITY_AUTO_DISCOVERY: false
         
-    - name: Upload Windows artifacts
-      if: runner.os == 'Windows'
+    - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: windows-artifacts
-        path: dist/*.exe
-        
-    - name: Upload macOS artifacts
-      if: runner.os == 'macOS'
-      uses: actions/upload-artifact@v4
+        name: ${{ matrix.platform }}-artifacts
+        path: |
+          dist/*.exe
+          dist/*.dmg
+          dist/*.zip
+          dist/*.AppImage
+          dist/*.deb
+        if-no-files-found: ignore
+
+  create-release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
       with:
-        name: macos-artifacts
-        path: dist/*.dmg
-        
-    - name: Upload Linux artifacts
-      if: runner.os == 'Linux'
-      uses: actions/upload-artifact@v4
-      with:
-        name: linux-artifacts
-        path: dist/*.AppImage
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
