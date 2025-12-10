@@ -57,7 +57,7 @@
     "linux": {
       "target": ["AppImage", "deb"],
       "category": "Utility",
-      "icon": "build/icon.png",
+      "icon": "icon.png",
       "maintainer": "Smilez <smilezreal@yahoo.com>"
     },
     "nsis": {
