@@ -1,7 +1,7 @@
 {
-  "name": "StatusStrap",
-  "version": "1.0.25",
-  "description": "StatusStrap App",
+  "name": "SmilezStrap",
+  "version": "1.0.0",
+  "description": "SmilezStrap App",
   "author": {
     "name": "Smilez",
     "email": "smilezreal@yahoo.com"
@@ -9,7 +9,7 @@
   "main": "main.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Orbit-Softworks/statusstrap-windows-application.git"
+    "url": "https://github.com/Orbit-Softworks/smilezstrap"
   },
   "scripts": {
     "start": "electron .",
@@ -29,7 +29,7 @@
   },
   "build": {
     "appId": "com.statusstrap.app",
-    "productName": "StatusStrap",
+    "productName": "SmilezStrap",
     "files": [
       "**/*",
       "!**/*.md"
@@ -68,7 +68,7 @@
     "publish": {
       "provider": "github",
       "owner": "Orbit-Softworks",
-      "repo": "statusstrap-windows-application"
+      "repo": "smilezstrap"
     }
   }
 }
